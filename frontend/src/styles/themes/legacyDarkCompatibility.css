@@ -1,0 +1,1362 @@
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    position: static;
+    min-height: auto;
+  }
+
+  .tabs-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tabs-nav button {
+    text-align: center;
+  }
+
+  .dashboard-header,
+  .cockpit-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .strategy-active-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .active-strategy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar-controls {
+    justify-content: flex-start;
+  }
+
+  .cockpit-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .engine-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .safety-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .backtest-config-grid,
+  .backtest-results-grid,
+  .strategy-lab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .backtest-metrics,
+  .backtest-form-grid,
+  .strategy-form-grid,
+  .strategy-run-controls,
+  .strategy-compare-controls,
+  .strategy-sweep-grid,
+  .strategy-sweep-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .approval-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .approval-sidebar {
+    position: static;
+    max-height: none;
+  }
+
+  .pre-trade-form,
+  .pre-trade-metrics,
+  .pre-trade-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journal-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .app {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 27px;
+  }
+
+  .summary-grid,
+  .memory-grid,
+  .charts-grid,
+  .engine-grid,
+  .safety-grid,
+  .automation-grid,
+  .approval-metrics,
+  .approval-detail-grid,
+  .approval-timeline,
+  .heatmap-card dl,
+  .metrics,
+  .detail-stats,
+  .watchlist-card-header,
+  .watchlist-metrics,
+  .backtest-metrics,
+  .backtest-form-grid,
+  .strategy-form-grid,
+  .strategy-run-controls,
+  .strategy-compare-controls,
+  .strategy-comparison-result,
+  .strategy-sweep-grid,
+  .strategy-sweep-range,
+  .strategy-sweep-summary,
+  .trade-form,
+  .pre-trade-form,
+  .pre-trade-metrics,
+  .pre-trade-detail-grid,
+  .alert-card dl,
+  .proposed-order-card dl,
+  .paper-portfolio-grid,
+  .paper-row {
+    grid-template-columns: 1fr;
+  }
+
+  .engine-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-nav,
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trade-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stock-card-main {
+    grid-template-columns: 1fr 84px;
+  }
+
+  .pending-trade-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scan-controls,
+  .sort-controls,
+  .search-control {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .scan-controls input,
+  .sort-controls select,
+  .search-control input,
+  .direction-toggle {
+    width: 100%;
+  }
+}
+
+:root {
+  --bg-0: #050910;
+  --bg-1: #08111d;
+  --glass: rgba(13, 24, 38, 0.66);
+  --glass-strong: rgba(15, 29, 48, 0.82);
+  --glass-soft: rgba(18, 34, 55, 0.48);
+  --line: rgba(125, 170, 220, 0.18);
+  --line-strong: rgba(125, 185, 255, 0.34);
+  --text-main: #f4f8ff;
+  --text-muted: #9fb0c4;
+  --text-soft: #c7d4e4;
+  --blue: #62b3ff;
+  --blue-soft: rgba(98, 179, 255, 0.15);
+  --green: #55d99a;
+  --amber: #f4bf5f;
+  --red: #ff7373;
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+body {
+  background:
+    linear-gradient(135deg, rgba(11, 25, 42, 0.95) 0%, rgba(5, 9, 16, 1) 44%, rgba(5, 13, 23, 1) 100%),
+    linear-gradient(180deg, rgba(98, 179, 255, 0.08), transparent 34%);
+  color: var(--text-main);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.48), transparent 72%);
+}
+
+.app {
+  background: linear-gradient(180deg, rgba(98, 179, 255, 0.045), transparent 320px);
+}
+
+.app-sidebar,
+.summary-panel,
+.alerts-panel,
+.safety-panel,
+.detail-panel,
+.memory-panel,
+.journal-form-panel,
+.journal-list-panel,
+.stock-list,
+.heatmap-panel,
+.chart-panel,
+.stock-chart-panel,
+.engine-panel,
+.scanner-table-layout,
+.backtest-config-card,
+.backtest-actions,
+.state-panel {
+  border-color: var(--line);
+  background: var(--glass);
+  box-shadow: var(--shadow), var(--inner-highlight);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.app-sidebar {
+  background:
+    linear-gradient(180deg, rgba(18, 36, 58, 0.82), rgba(10, 18, 31, 0.68)),
+    var(--glass);
+}
+
+.app-sidebar strong,
+h1,
+.summary-panel strong,
+.stock-card-main h3,
+.stock-card-main strong,
+.regime-pill strong,
+.alerts-panel-header h2,
+.list-header h2,
+.detail-header h2 {
+  color: var(--text-main);
+  text-shadow: 0 1px 24px rgba(98, 179, 255, 0.12);
+}
+
+.eyebrow,
+.regime-pill span,
+.summary-panel span,
+.stock-card-main span,
+.progress-row span,
+.detail-stats dt,
+.metrics dt,
+.scan-controls label,
+.sort-controls label,
+.search-control label,
+.threshold-control,
+.engine-grid span,
+.engine-actions label,
+.safety-grid span,
+.automation-grid span,
+.approval-requests > span,
+.setting-field span,
+.watchlist-metrics dt,
+.trade-row span,
+.paper-portfolio-grid span,
+.paper-row span,
+.pre-trade-metrics span,
+.pre-trade-detail-grid h3,
+.pre-trade-detail-grid dt,
+.proposed-order-card dt,
+.alert-card dt,
+.scanner-table th {
+  color: var(--text-muted);
+}
+
+.subtitle,
+.list-header span,
+.alerts-panel-header span,
+.chart-header span,
+.settings-hint,
+.alerts-empty,
+.approval-requests p,
+.muted-text {
+  color: var(--text-soft);
+}
+
+.tabs-nav button,
+.scan-controls,
+.sort-controls,
+.toggle-control,
+.compact-toggle,
+.search-control,
+.threshold-control,
+.view-toggle,
+.direction-toggle,
+.memory-list button,
+.momentum-list button,
+.approval-filter-bar button,
+.approval-actions button,
+.filters button,
+.quick-filters button,
+.view-toggle button,
+.card-actions button,
+.watchlist-button,
+.drawer-close,
+.chart-timeframes button,
+.paper-order-actions button {
+  border-color: var(--line);
+  background: rgba(15, 29, 48, 0.56);
+  color: var(--text-main);
+  box-shadow: var(--inner-highlight);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.tabs-nav button:hover,
+.tabs-nav button.active,
+.direction-toggle:hover:not(:disabled),
+.memory-list button:hover,
+.momentum-list button:hover,
+.approval-filter-bar button:hover,
+.approval-filter-bar button.active,
+.approval-actions button:hover:not(:disabled),
+.filters button:hover,
+.filters button.active,
+.quick-filters button:hover,
+.quick-filters button.active,
+.view-toggle button:hover,
+.view-toggle button.active,
+.card-actions button:hover,
+.watchlist-button:hover,
+.chart-timeframes button:hover,
+.chart-timeframes button.active,
+.paper-order-actions button:hover:not(:disabled),
+.drawer-close:hover {
+  border-color: var(--line-strong);
+  background: linear-gradient(180deg, rgba(98, 179, 255, 0.18), rgba(22, 44, 70, 0.62));
+  box-shadow:
+    0 0 0 1px rgba(98, 179, 255, 0.08),
+    0 10px 30px rgba(28, 93, 156, 0.16),
+    var(--inner-highlight);
+  transform: translateY(-1px);
+}
+
+.tabs-nav button.active,
+.filters button.active,
+.quick-filters button.active,
+.view-toggle button.active {
+  color: var(--color-white);
+}
+
+input,
+select,
+textarea,
+.scan-controls input,
+.scan-controls select,
+.sort-controls select,
+.search-control input,
+.threshold-control input,
+.engine-actions select,
+.setting-field input,
+.setting-field select,
+.trade-form input,
+.trade-form select,
+.trade-form textarea,
+.backtest-form-grid input,
+.backtest-form-grid select,
+.pre-trade-form input,
+.pre-trade-form select {
+  border-color: var(--line);
+  background: rgba(7, 15, 26, 0.68);
+  color: var(--text-main);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(98, 179, 255, 0.62);
+  box-shadow:
+    0 0 0 3px rgba(98, 179, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.regime-pill,
+.alert-banner,
+.stock-card,
+.watchlist-card,
+.alert-card,
+.memory-list button,
+.momentum-list button,
+.approval-card,
+.approval-metrics div,
+.approval-detail-grid div,
+.approval-timeline div,
+.proposed-order-card,
+.pre-trade-results,
+.automation-grid div,
+.approval-list article,
+.safety-grid div,
+.engine-grid div,
+.watchlist-metrics div,
+.metrics div,
+.detail-stats div,
+.trade-row,
+.paper-portfolio-grid div,
+.paper-row,
+.setting-field,
+.pre-trade-metrics div,
+.pre-trade-detail-grid article,
+.ai-reasoning-panel,
+.confidence-breakdown-panel,
+.chart-tooltip {
+  border-color: var(--line);
+  background: rgba(8, 18, 31, 0.58);
+  box-shadow: var(--inner-highlight);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+
+.regime-pill {
+  border-left-color: var(--blue);
+  background: linear-gradient(135deg, rgba(98, 179, 255, 0.18), rgba(12, 23, 38, 0.72));
+}
+
+.summary-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-panel::after,
+.stock-card::after,
+.watchlist-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 42%);
+  opacity: 0.55;
+}
+
+.stock-card,
+.watchlist-card {
+  position: relative;
+  overflow: hidden;
+  border-left-color: var(--green);
+}
+
+.stock-card:hover,
+.watchlist-card:hover,
+.proposed-order-card:hover,
+.approval-card:hover,
+.memory-list button:hover,
+.momentum-list button:hover,
+.alert-card:hover {
+  border-color: var(--line-strong);
+  box-shadow:
+    0 14px 42px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(98, 179, 255, 0.08),
+    var(--inner-highlight);
+}
+
+.stock-card.selected,
+.scanner-table tbody tr:hover,
+.scanner-table tbody tr.selected {
+  background: rgba(40, 108, 145, 0.18);
+}
+
+.scanner-table th,
+.scanner-table td {
+  border-bottom-color: rgba(125, 170, 220, 0.14);
+}
+
+.progress-track {
+  background: rgba(125, 170, 220, 0.16);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--green), var(--blue));
+  box-shadow: 0 0 18px rgba(98, 179, 255, 0.24);
+}
+
+.buy,
+.engine-state.running,
+.recommendation-execute {
+  border-color: rgba(85, 217, 154, 0.42);
+  background: rgba(42, 132, 91, 0.2);
+  color: #9ff3c7;
+}
+
+.hold,
+.risk-pill.medium,
+.recommendation-wait,
+.recommendation-reduce_size {
+  border-color: rgba(244, 191, 95, 0.42);
+  background: rgba(135, 91, 25, 0.22);
+  color: #ffd98e;
+}
+
+.sell,
+.recommendation-reject,
+.risk-pill.high {
+  border-color: rgba(255, 115, 115, 0.44);
+  background: rgba(130, 38, 47, 0.24);
+  color: #ffaaaa;
+}
+
+.engine-state.stopped,
+.risk-pill {
+  border-color: var(--line);
+  background: rgba(15, 29, 48, 0.58);
+  color: var(--text-soft);
+}
+
+.alert-banner,
+.alert-card {
+  border-color: rgba(85, 217, 154, 0.34);
+  background: linear-gradient(135deg, rgba(42, 132, 91, 0.2), rgba(9, 20, 30, 0.68));
+}
+
+.danger-action:hover:not(:disabled) {
+  border-color: rgba(255, 115, 115, 0.56);
+  background: rgba(130, 38, 47, 0.28);
+}
+
+.heatmap-card {
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.18),
+    var(--inner-highlight);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+
+.heatmap-card.neutral {
+  background: rgba(35, 52, 75, calc(var(--heat-intensity) + 0.18));
+}
+
+.heatmap-card.bullish {
+  background:
+    linear-gradient(135deg, rgba(85, 217, 154, 0.1), transparent),
+    rgba(35, 132, 83, var(--heat-intensity));
+}
+
+.heatmap-card.bearish {
+  background:
+    linear-gradient(135deg, rgba(255, 115, 115, 0.1), transparent),
+    rgba(143, 49, 58, var(--heat-intensity));
+}
+
+.drawer-backdrop {
+  background: rgba(3, 7, 12, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.stock-detail-drawer {
+  border-left-color: var(--line-strong);
+  background: rgba(7, 15, 27, 0.9);
+  box-shadow: -24px 0 70px rgba(0, 0, 0, 0.44);
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
+}
+
+::selection {
+  background: rgba(98, 179, 255, 0.34);
+  color: var(--color-white);
+}
+
+@media (max-width: 760px) {
+  .active-strategy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-audit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-construction-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html,
+  body,
+  #root {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .app {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .app-shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .app-sidebar {
+    position: sticky;
+    top: 8px;
+    z-index: 30;
+    min-height: auto;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .app-sidebar > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .app-sidebar .eyebrow {
+    margin-bottom: 0;
+    font-size: 10px;
+  }
+
+  .app-sidebar strong {
+    font-size: 16px;
+  }
+
+  .tabs-shell {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tabs-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(98, 179, 255, 0.18), rgba(15, 29, 48, 0.72));
+    color: var(--color-white);
+    padding: 10px 12px;
+    font-weight: 900;
+    box-shadow: var(--inner-highlight);
+  }
+
+  .tabs-menu-toggle b {
+    border-radius: 999px;
+    background: rgba(98, 179, 255, 0.16);
+    color: var(--text-soft);
+    padding: 4px 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .tabs-nav {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      max-height 180ms ease,
+      opacity 160ms ease;
+  }
+
+  .tabs-nav.open {
+    max-height: 70vh;
+    overflow-y: auto;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .tabs-nav button {
+    min-height: 42px;
+    border-radius: 11px;
+    padding: 9px 11px;
+    text-align: left;
+  }
+
+  .app-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-header,
+  .alerts-panel-header,
+  .list-header,
+  .safety-header,
+  .approval-card-header,
+  .risk-stop-impact,
+  .playbook-export-panel {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  h1 {
+    font-size: clamp(25px, 8vw, 34px);
+    line-height: 1.05;
+  }
+
+  h2 {
+    font-size: clamp(20px, 6vw, 26px);
+  }
+
+  .toolbar-controls,
+  .cockpit-controls,
+  .scan-controls,
+  .sort-controls,
+  .quick-filters,
+  .filters,
+  .view-toggle,
+  .engine-actions,
+  .approval-filter-bar,
+  .approval-actions,
+  .approval-edit-header,
+  .strategy-lab-section-nav,
+  .playbook-actions,
+  .chart-timeframes,
+  .chart-layer-toggles,
+  .paper-order-actions {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .toolbar-controls > *,
+  .cockpit-controls > *,
+  .scan-controls > *,
+  .sort-controls > *,
+  .quick-filters > *,
+  .filters > *,
+  .view-toggle > *,
+  .engine-actions > *,
+  .approval-filter-bar > *,
+  .approval-actions > *,
+  .approval-edit-header > *,
+  .strategy-lab-section-nav > *,
+  .playbook-actions > *,
+  .chart-timeframes > *,
+  .chart-layer-toggles > *,
+  .paper-order-actions > * {
+    width: 100%;
+  }
+
+  .summary-grid,
+  .memory-grid,
+  .charts-grid,
+  .engine-grid,
+  .safety-grid,
+  .automation-grid,
+  .approval-metrics,
+  .approval-detail-grid,
+  .approval-edit-form,
+  .approval-timeline,
+  .strategy-insight-grid,
+  .strategy-library-summary,
+  .strategy-deployment-card,
+  .strategy-compare-dashboard,
+  .risk-gauge-grid,
+  .risk-table-grid,
+  .playbook-overview-grid,
+  .playbook-insight-grid,
+  .snapshot-compare-grid,
+  .snapshot-compare-controls,
+  .settings-grid,
+  .backtest-config-grid,
+  .backtest-results-grid,
+  .backtest-metrics,
+  .backtest-form-grid,
+  .strategy-lab-grid,
+  .strategy-form-grid,
+  .strategy-run-controls,
+  .strategy-compare-controls,
+  .strategy-sweep-grid,
+  .strategy-sweep-range,
+  .strategy-sweep-summary,
+  .journal-panel,
+  .trade-form,
+  .pre-trade-form,
+  .pre-trade-metrics,
+  .pre-trade-detail-grid,
+  .paper-portfolio-grid,
+  .paper-row,
+  .detail-stats,
+  .metrics,
+  .watchlist-card-header,
+  .watchlist-metrics,
+  .heatmap-card dl,
+  .alert-card dl,
+  .proposed-order-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .strategy-sweep-range {
+    align-items: stretch;
+  }
+
+  .stock-card-main {
+    grid-template-columns: 1fr;
+  }
+
+  .pending-trade-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-list,
+  .alerts-panel,
+  .chart-panel,
+  .engine-panel,
+  .safety-panel,
+  .risk-table-card,
+  .strategy-lab-card,
+  .playbook-overview-card,
+  .playbook-snapshot-panel,
+  .playbook-export-panel,
+  .playbook-audit-panel,
+  .playbook-ai-panel,
+  .journal-form-panel,
+  .journal-list-panel,
+  .scanner-table-layout,
+  .backtest-config-card,
+  .backtest-actions,
+  .approval-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .heatmap-grid,
+  .watchlist-grid,
+  .stock-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner-table-panel,
+  .strategy-sweep-table,
+  .risk-table-card,
+  .paper-table,
+  .backtest-trade-log {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scanner-table,
+  .strategy-sweep-table table {
+    min-width: 720px;
+  }
+
+  .risk-table-head,
+  .risk-table-row,
+  .risk-table-head.compact,
+  .risk-table-row.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-list button,
+  .momentum-list button,
+  .playbook-audit-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-list small,
+  .momentum-list small {
+    grid-column: auto;
+  }
+
+  .approval-card-header h3 {
+    font-size: 24px;
+  }
+
+  .approval-card-badges {
+    justify-content: flex-start;
+  }
+
+  .chart-canvas {
+    height: 280px;
+  }
+
+  .stock-chart-canvas {
+    height: 320px;
+  }
+
+  .drawer-backdrop {
+    align-items: stretch;
+  }
+
+  .stock-detail-drawer {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    border-left: 0;
+    border-radius: 0;
+    padding: 16px;
+  }
+
+  .detail-panel {
+    position: static;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding: 8px;
+  }
+
+  .app-sidebar {
+    top: 6px;
+    padding: 10px;
+  }
+
+  .summary-panel,
+  .stock-card,
+  .watchlist-card,
+  .alert-card,
+  .approval-card,
+  .proposed-order-card,
+  .strategy-lab-card,
+  .risk-gauge,
+  .setting-field {
+    padding: 12px;
+  }
+
+  .chart-canvas,
+  .stock-chart-canvas {
+    height: 260px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .alert-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .landing-status-strip,
+  .landing-feature-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .alert-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-nav {
+    align-items: flex-start;
+    position: absolute;
+  }
+
+  .landing-nav-actions {
+    justify-content: flex-start;
+  }
+
+  .landing-hero {
+    min-height: 88vh;
+    padding-top: 150px;
+  }
+
+  .landing-status-strip,
+  .landing-feature-band {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .alert-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-nav {
+    display: grid;
+  }
+
+  .landing-actions,
+  .landing-actions button,
+  .landing-nav-actions,
+  .landing-nav-actions button,
+  .login-card-actions,
+  .login-card-actions button {
+    width: 100%;
+  }
+}
+
+
+/* ===== Premium Dark Trading Cockpit Override ===== */
+
+:root {
+  --bg-deep: #05070d;
+  --bg-panel: rgba(10, 18, 31, 0.78);
+  --bg-panel-strong: rgba(13, 25, 42, 0.92);
+  --border-soft: rgba(125, 185, 255, 0.16);
+  --border-bright: rgba(112, 191, 255, 0.42);
+  --text-primary: #f5f8ff;
+  --text-secondary: #a9b8ca;
+  --text-muted: #718196;
+  --cyan: #64d8ff;
+  --blue: #5b8cff;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #fb7185;
+  --purple: #a78bfa;
+  --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.42);
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(91, 140, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(100, 216, 255, 0.1), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(74, 222, 128, 0.07), transparent 28%),
+    linear-gradient(135deg, #05070d 0%, #08111f 45%, #04070c 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent 78%);
+}
+
+.app {
+  position: relative;
+  min-height: 100vh;
+  padding: 28px;
+  background: transparent;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.app-sidebar,
+.dashboard-header,
+.ibkr-panel,
+.ibkr-card,
+.scan-controls,
+.toggle-control,
+.regime-pill,
+.freshness-warning,
+.freshness-badge {
+  border: 1px solid var(--border-soft);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 40%),
+    var(--bg-panel);
+  box-shadow:
+    var(--shadow-panel),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.app-sidebar {
+  top: 24px;
+  min-height: calc(100vh - 56px);
+  padding: 18px;
+  border-radius: 22px;
+}
+
+.app-sidebar > div:first-child {
+  padding: 14px;
+  border: 1px solid rgba(100, 216, 255, 0.13);
+  border-radius: 18px;
+  background: rgba(8, 15, 27, 0.68);
+}
+
+.app-sidebar strong {
+  color: var(--text-primary);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  color: var(--cyan);
+  letter-spacing: 0.11em;
+}
+
+.tabs-nav {
+  gap: 9px;
+}
+
+.tabs-nav button {
+  min-height: 44px;
+  border: 1px solid rgba(125, 185, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(8, 16, 29, 0.56);
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  font-weight: 850;
+  transition: all 160ms ease;
+}
+
+.tabs-nav button:hover {
+  border-color: rgba(100, 216, 255, 0.34);
+  background: rgba(21, 43, 73, 0.64);
+  color: var(--color-white);
+  transform: translateX(2px);
+}
+
+.tabs-nav button.active {
+  border-color: rgba(100, 216, 255, 0.58);
+  background:
+    linear-gradient(135deg, rgba(100, 216, 255, 0.18), rgba(91, 140, 255, 0.13)),
+    rgba(15, 31, 54, 0.82);
+  color: var(--color-white);
+  box-shadow:
+    0 0 0 1px rgba(100, 216, 255, 0.1),
+    0 12px 30px rgba(91, 140, 255, 0.16);
+}
+
+.dashboard-header {
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 22px;
+  border-radius: 24px;
+}
+
+h1 {
+  margin-bottom: 8px;
+  color: var(--color-white);
+  font-size: clamp(30px, 4vw, 46px);
+  letter-spacing: -0.055em;
+}
+
+h2 {
+  color: var(--color-white);
+  letter-spacing: -0.035em;
+}
+
+h3 {
+  color: var(--color-white);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}
+
+.toolbar-controls {
+  gap: 10px;
+}
+
+.scan-controls,
+.toggle-control {
+  min-height: 48px;
+  border-radius: 15px;
+  background: rgba(6, 13, 24, 0.72);
+}
+
+.scan-controls label,
+.toggle-control span {
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.header-setting-summary {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 150px;
+  padding: 8px 12px;
+}
+
+.header-setting-summary span {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-setting-summary strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+@media (min-width: 1200px) and (max-width: 1699px) {
+  .dashboard-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .dashboard-header-copy {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .toolbar-controls {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .toolbar-controls > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .header-setting-summary {
+    min-width: 0;
+    max-width: min(100%, 360px);
+  }
+
+  .header-setting-summary strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+input,
+select {
+  min-height: 38px;
+  border: 1px solid rgba(125, 185, 255, 0.16) !important;
+  border-radius: 12px !important;
+  background: rgba(4, 10, 19, 0.76) !important;
+  color: var(--text-primary) !important;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(100, 216, 255, 0.58) !important;
+  box-shadow: 0 0 0 4px rgba(100, 216, 255, 0.12);
+}
+
+button,
+.direction-toggle,
+.ibkr-actions button {
+  border: 1px solid rgba(125, 185, 255, 0.16);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
+    rgba(12, 23, 39, 0.82);
+  color: var(--text-primary);
+  transition: all 160ms ease;
+}
+
+button:hover,
+.direction-toggle:hover,
+.ibkr-actions button:hover {
+  border-color: rgba(100, 216, 255, 0.48);
+  background:
+    linear-gradient(135deg, rgba(100, 216, 255, 0.16), rgba(91, 140, 255, 0.12)),
+    rgba(15, 32, 55, 0.9);
+  box-shadow: 0 12px 34px rgba(91, 140, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.direction-toggle {
+  min-height: 50px;
+  padding-inline: 16px;
+  font-weight: 900;
+}
+
+.regime-pill {
+  min-width: 220px;
+  border-radius: 18px;
+  border-left: 0;
+  background:
+    linear-gradient(135deg, rgba(74, 222, 128, 0.18), rgba(10, 22, 36, 0.76));
+}
+
+.regime-pill span {
+  color: rgba(210, 255, 230, 0.7);
+}
+
+.regime-pill strong {
+  color: #b7ffd5;
+}
+
+.freshness-badge {
+  display: grid;
+  gap: 4px;
+  min-height: 50px;
+  padding: 9px 13px;
+  border-radius: 15px;
+}
+
+.freshness-badge span {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.freshness-badge strong {
+  color: var(--color-white);
+  font-size: 14px;
+}
+
+.freshness-badge.critical,
+.freshness-warning.critical {
+  border-color: rgba(251, 113, 133, 0.38);
+  background:
+    linear-gradient(135deg, rgba(251, 113, 133, 0.16), transparent),
+    rgba(35, 12, 20, 0.76);
+}
+
+.freshness-badge.critical strong,
+.freshness-warning.critical strong {
+  color: #ffb6c1;
+}
+
+.freshness-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  border-radius: 18px;
+}
+
+.freshness-warning span {
+  color: var(--text-secondary);
+}

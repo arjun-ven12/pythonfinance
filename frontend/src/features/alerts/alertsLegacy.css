@@ -1,0 +1,61 @@
+.alerts-panel {
+  margin-top: 14px;
+  padding: 18px;
+}
+
+.alerts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.alert-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--success-dark);
+  border-radius: 8px;
+  background: #0d1713;
+}
+
+.alert-card > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.alert-card strong {
+  color: var(--color-white);
+  font-size: 22px;
+}
+
+.alert-card span {
+  color: var(--success-soft-text);
+  font-weight: 800;
+}
+
+.alert-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.alert-card dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.alert-card dd {
+  margin: 4px 0 0;
+  color: var(--text-bright);
+  font-weight: 800;
+}
+
+.proposed-orders-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}

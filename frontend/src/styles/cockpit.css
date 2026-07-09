@@ -1,0 +1,57 @@
+/*
+ * Trading cockpit CSS entrypoint.
+ * Order matters: tokens -> themes -> base -> utilities -> component/feature CSS -> compatibility overrides.
+ */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
+@import "./tokens/colors.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/typography.css";
+@import "./tokens/elevation.css";
+@import "./tokens/animation.css";
+@import "./tokens/breakpoints.css";
+@import "./themes/dark.css";
+@import "./themes/light.css";
+@import "./base/reset.css";
+@import "./base/layout.css";
+@import "./base/typography.css";
+@import "./utilities/flex.css";
+@import "./utilities/spacing.css";
+@import "./utilities/surface.css";
+@import "./utilities/visibility.css";
+@import "../components/responsive/responsivePrimitives.css";
+@import "../components/common/AppShell.css";
+@import "../features/landing/legacyLanding.css";
+@import "../features/auth/auth.css";
+@import "../components/common/Tabs.css";
+@import "../components/common/Controls.css";
+@import "../features/portfolio/portfolioConstruction.css";
+@import "../features/dashboard/dashboard.css";
+@import "../features/validation/validation.css";
+@import "../features/engine/engineSummary.css";
+@import "../features/approvals/approvals.css";
+@import "../features/alerts/alerts.css";
+@import "../features/portfolio/risk.css";
+@import "../features/strategyLab/strategyLab.css";
+@import "../features/playbook/playbook.css";
+@import "../features/settings/engineSafety.css";
+@import "../features/watchlist/watchlistLegacy.css";
+@import "../features/strategyLab/backtesting.css";
+@import "../features/portfolio/trades.css";
+@import "../features/scanner/scanner.css";
+@import "../features/alerts/alertsLegacy.css";
+@import "../features/approvals/preTrade.css";
+@import "../features/portfolio/paperPortfolio.css";
+@import "../features/settings/settings.css";
+@import "./themes/legacyDarkCompatibility.css";
+@import "../features/broker/broker.css";
+@import "./themes/legacyLightCompatibility.css";
+@import "../features/settings/stockUniverses.css";
+@import "../features/watchlist/watchlist.css";
+@import "./themes/premiumTheme.css";
+@import "./base/responsive.css";
+@import "../features/scanner/scanner.mobile.css";
+@import "../features/scanner/scanner.tablet.css";
+@import "../features/scanner/scanner.desktop.css";
+@import "../features/scanner/scanner-toolbar.css";

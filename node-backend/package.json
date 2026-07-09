@@ -1,0 +1,38 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:backfill-ledger": "node scripts/backfill-paper-ledger.js",
+    "db:seed": "prisma db seed",
+    "prestart": "prisma generate",
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@upstash/redis": "^1.38.0",
+    "axios": "^1.16.1",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "moomoo-api": "^10.8.6808",
+    "node-cron": "^4.2.1",
+    "nodemon": "^3.1.14",
+    "prisma": "^6.19.3",
+    "socket.io": "^4.8.3",
+    "ws": "^8.21.0"
+  }
+}

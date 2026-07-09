@@ -1,0 +1,8 @@
+
+:root {
+  --shadow-sm: 0 8px 22px rgba(0, 0, 0, 0.16);
+  --shadow-md: 0 16px 42px rgba(0, 0, 0, 0.22);
+  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.32);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --panel-blur: blur(18px);
+}

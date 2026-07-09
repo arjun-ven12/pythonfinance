@@ -1,0 +1,244 @@
+@media (min-width: 1280px) {
+  .scanner-page {
+    --page-gap: 16px;
+    --panel-gap: 12px;
+    --toolbar-height: 84px;
+    --card-density: 12px;
+    --desktop-max-width: 100%;
+    width: 100%;
+    max-width: var(--desktop-max-width);
+    margin-inline: 0;
+  }
+
+  .scanner-page .scanner-controls-stack {
+    display: grid;
+    gap: var(--panel-gap);
+  }
+
+  .scanner-page .cockpit-controls {
+    display: grid !important;
+    grid-template-columns:
+      minmax(136px, 0.5fr)
+      minmax(340px, 2fr)
+      minmax(250px, 260px)
+      minmax(300px, auto)
+      minmax(330px, 380px);
+    align-items: stretch;
+    gap: var(--panel-gap);
+    max-height: var(--toolbar-height);
+    margin-bottom: 0;
+  }
+
+  .scanner-page .view-toggle,
+  .scanner-page .search-control,
+  .scanner-page .sort-controls,
+  .scanner-page .filters,
+  .scanner-page .market-filter-controls {
+    min-height: 0;
+    height: var(--toolbar-height);
+    align-content: center;
+  }
+
+  .scanner-page .view-toggle,
+  .scanner-page .filters,
+  .scanner-page .market-filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .scanner-page .search-control {
+    display: grid !important;
+    grid-template-columns: auto minmax(180px, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scanner-page .search-control input {
+    min-width: 0;
+  }
+
+  .scanner-page .clear-scanned-button {
+    max-width: 144px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  .scanner-page .sort-controls {
+    display: grid !important;
+    grid-template-columns: auto minmax(130px, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scanner-page .sort-controls .direction-toggle {
+    grid-column: 1 / -1;
+    min-height: 34px;
+  }
+
+  .scanner-page .filters button,
+  .scanner-page .view-toggle button,
+  .scanner-page .quick-filters button,
+  .scanner-page .direction-toggle {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .scanner-page .market-filter-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .scanner-page .market-filter-controls label {
+    min-width: 0;
+  }
+
+  .scanner-page .market-filter-controls select {
+    min-height: 34px;
+    padding-block: 6px;
+  }
+
+  .scanner-page .sector-filter-pill {
+    grid-column: 5;
+    justify-self: end;
+    align-self: end;
+    max-width: 100%;
+  }
+
+  .scanner-page .quick-filters {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    max-height: 180px;
+    margin: 0;
+    padding: 10px;
+  }
+
+  .scanner-page .threshold-control {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  .scanner-page .threshold-control input {
+    width: 72px;
+    min-height: 32px;
+  }
+
+  .scanner-page .prepared-note {
+    flex: 1 1 260px;
+    margin-left: auto;
+    font-size: 12px;
+  }
+
+  .scanner-page .scanner-results-stage {
+    margin-top: var(--page-gap);
+  }
+
+  .scanner-page .cockpit-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+    align-items: start;
+    gap: var(--page-gap);
+  }
+
+  .scanner-page .stock-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--panel-gap);
+    padding: var(--card-density);
+  }
+
+  .scanner-page .stock-list .list-header {
+    grid-column: 1 / -1;
+    margin-bottom: 2px;
+  }
+
+  .scanner-page .stock-card {
+    min-height: 260px;
+    max-height: 340px;
+    margin-bottom: 0;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .scanner-page .stock-card:has(.expanded-card) {
+    max-height: none;
+  }
+
+  .scanner-page .stock-card-main {
+    grid-template-columns: minmax(132px, 1fr) 70px repeat(3, minmax(70px, 0.65fr)) !important;
+    gap: 10px;
+  }
+
+  .scanner-page .stock-card-main h3 {
+    font-size: 22px;
+  }
+
+  .scanner-page .stock-card-main strong {
+    font-size: 17px;
+  }
+
+  .scanner-page .stock-card-company,
+  .scanner-page .stock-card-main span {
+    font-size: 11px;
+  }
+
+  .scanner-page .market-badge-row {
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .scanner-page .market-badge {
+    min-height: 20px;
+    padding: 2px 7px;
+    font-size: 10px;
+  }
+
+  .scanner-page .card-actions {
+    gap: 8px;
+  }
+
+  .scanner-page .detail-panel {
+    position: sticky;
+    top: 24px;
+    width: 100%;
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    padding: 14px;
+  }
+
+  .scanner-page .detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .scanner-page .detail-stats div,
+  .scanner-page .metrics div {
+    min-height: 58px;
+    padding: 10px;
+  }
+
+  .scanner-page .scanner-table-layout {
+    padding: 12px;
+  }
+
+  .scanner-page .scanner-table-panel {
+    overflow-x: auto;
+  }
+
+  .scanner-page .scanner-table {
+    display: table;
+    min-width: 980px;
+  }
+}
+
+@media (min-width: 2000px) {
+  .scanner-page .stock-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

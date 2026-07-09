@@ -1,0 +1,81 @@
+.responsive-audit-page {
+  color: var(--terminal-text);
+}
+
+.responsive-audit-viewport {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.responsive-audit-viewport span {
+  color: var(--terminal-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.responsive-audit-viewport strong {
+  color: var(--terminal-text);
+  font-size: clamp(18px, 6vw, 26px);
+}
+
+.responsive-audit-card-stack,
+.responsive-audit-controls {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.responsive-audit-card-stack article {
+  border: 1px solid var(--terminal-line);
+  border-radius: var(--radius-card);
+  background: var(--terminal-surface-muted);
+  padding: var(--space-md);
+  font-weight: 800;
+}
+
+.responsive-audit-controls button,
+.responsive-audit-controls input,
+.responsive-audit-controls select {
+  min-height: 44px;
+  border: 1px solid var(--terminal-line);
+  border-radius: var(--radius-control);
+  background: var(--terminal-input);
+  color: var(--terminal-text);
+  padding: 10px 12px;
+}
+
+.responsive-audit-controls button {
+  background: linear-gradient(135deg, var(--terminal-green), var(--terminal-blue));
+  color: var(--color-white);
+  font-weight: 900;
+}
+
+.responsive-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.responsive-audit-table th,
+.responsive-audit-table td {
+  border-bottom: 1px solid var(--terminal-line);
+  padding: 12px;
+  text-align: left;
+}
+
+.responsive-audit-table th {
+  color: var(--terminal-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.responsive-audit-static-bar {
+  position: static;
+  display: grid;
+  margin-top: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .responsive-audit-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

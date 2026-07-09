@@ -1,0 +1,10 @@
+
+.page-container {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+.responsive-grid {
+  display: grid;
+  gap: var(--space-4);
+}

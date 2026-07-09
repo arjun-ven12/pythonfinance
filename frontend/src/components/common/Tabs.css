@@ -1,0 +1,47 @@
+
+.tabs-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.tabs-section {
+  display: grid;
+  gap: 5px;
+}
+
+.tabs-section + .tabs-section {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(143, 179, 200, 0.14);
+}
+
+.tabs-section-label {
+  color: #7893aa;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tabs-menu-toggle {
+  display: none;
+}
+
+.tabs-nav button {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-body);
+  padding: 9px 10px 9px 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.tabs-nav button:hover,
+.tabs-nav button.active {
+  border-color: var(--border-subtle);
+  background: rgba(19, 34, 56, 0.42);
+  color: var(--color-white);
+}

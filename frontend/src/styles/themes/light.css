@@ -1,0 +1,12 @@
+
+[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #edf3f8;
+  --app-bg-soft: #f6f9fc;
+  --app-surface: #ffffff;
+  --app-surface-raised: #f8fbfe;
+  --app-border: #c8d8e8;
+  --app-text: #162231;
+  --app-muted: #5c6d7d;
+  --app-hover: rgba(var(--accent-rgb), 0.1);
+}

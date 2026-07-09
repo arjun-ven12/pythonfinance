@@ -1,0 +1,8 @@
+
+:root {
+  --breakpoint-mobile-max: 767px;
+  --breakpoint-tablet-min: 768px;
+  --breakpoint-tablet-max: 1199px;
+  --breakpoint-desktop-min: 1200px;
+  --breakpoint-wide-min: 1600px;
+}

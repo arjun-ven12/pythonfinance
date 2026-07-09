@@ -1,0 +1,379 @@
+const prisma = require("../services/prisma");
+const settingsRepository = require("./settingsRepository");
+const { requireUserId } = require("./ownership");
+
+const ACTIVE_STATUSES = ["ACTIVE", "ACKNOWLEDGED", "SNOOZED"];
+const VALID_CATEGORIES = new Set([
+  "SCANNER",
+  "APPROVAL",
+  "RISK",
+  "PORTFOLIO",
+  "ENGINE",
+  "BROKER",
+  "VALIDATION",
+  "SYSTEM",
+]);
+const VALID_SEVERITIES = new Set(["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+const VALID_STATUSES = new Set([
+  "ACTIVE",
+  "ACKNOWLEDGED",
+  "SNOOZED",
+  "RESOLVED",
+  "EXPIRED",
+]);
+const VALID_SOURCES = new Set(["SCAN", "RULE", "MANUAL", "SYSTEM"]);
+
+function normalizeEnum(value, allowed, fallback) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return allowed.has(normalized) ? normalized : fallback;
+}
+
+function normalizeSymbol(value) {
+  const normalized = String(value || "SYSTEM").trim().toUpperCase();
+  return normalized || "SYSTEM";
+}
+
+function scoreBucketFromScore(score) {
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore)) return "UNKNOWN";
+  if (numericScore >= 90) return "90-100";
+  if (numericScore >= 80) return "80-89";
+  if (numericScore >= 70) return "70-79";
+  if (numericScore >= 60) return "60-69";
+  if (numericScore >= 50) return "50-59";
+  return "0-49";
+}
+
+function buildDedupeKey({ userId, category, symbol, severity, scoreBucket }) {
+  return [
+    requireUserId(userId),
+    normalizeEnum(category, VALID_CATEGORIES, "SYSTEM"),
+    normalizeSymbol(symbol),
+    normalizeEnum(severity, VALID_SEVERITIES, "MEDIUM"),
+    scoreBucket || "UNKNOWN",
+  ].join(":");
+}
+
+function severityFromScore(score) {
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore)) return "MEDIUM";
+  if (numericScore >= 90) return "CRITICAL";
+  if (numericScore >= 75) return "HIGH";
+  if (numericScore >= 60) return "MEDIUM";
+  return "LOW";
+}
+
+function list(userId, options = {}) {
+  const ownerId = requireUserId(userId);
+  const status = normalizeEnum(options.status, VALID_STATUSES, "");
+  const category = normalizeEnum(options.category, VALID_CATEGORIES, "");
+  const includeResolved =
+    options.includeResolved === true || options.includeResolved === "true";
+  const where = {
+    userId: ownerId,
+    ...(status
+      ? { status }
+      : includeResolved
+        ? {}
+        : { status: { in: ACTIVE_STATUSES } }),
+    ...(category ? { category } : {}),
+  };
+
+  return prisma.run((db) =>
+    db.alert.findMany({
+      where,
+      orderBy: [
+        { severity: "desc" },
+        { lastTriggeredAt: "desc" },
+        { generatedAt: "desc" },
+      ],
+      take: Math.min(Number.parseInt(options.limit, 10) || 100, 500),
+    })
+  );
+}
+
+async function getMutedCategories(userId) {
+  const setting = await settingsRepository.read(
+    userId,
+    "mutedAlertCategories"
+  );
+  return Array.isArray(setting?.value) ? setting.value : [];
+}
+
+async function muteCategory(userId, category) {
+  const normalized = normalizeEnum(category, VALID_CATEGORIES, "");
+  if (!normalized) {
+    throw new Error("Invalid alert category.");
+  }
+
+  const current = await getMutedCategories(userId);
+  const next = [...new Set([...current, normalized])];
+  await settingsRepository.write(userId, "mutedAlertCategories", next);
+  return next;
+}
+
+async function unmuteCategory(userId, category) {
+  const normalized = normalizeEnum(category, VALID_CATEGORIES, "");
+  if (!normalized) {
+    throw new Error("Invalid alert category.");
+  }
+
+  const current = await getMutedCategories(userId);
+  const next = current.filter((item) => item !== normalized);
+  await settingsRepository.write(userId, "mutedAlertCategories", next);
+  return next;
+}
+
+async function upsertAlert(userId, input = {}, tx = null) {
+  const ownerId = requireUserId(userId);
+  const db = tx || prisma;
+  const category = normalizeEnum(input.category, VALID_CATEGORIES, "SCANNER");
+  const severity = normalizeEnum(
+    input.severity,
+    VALID_SEVERITIES,
+    severityFromScore(input.score ?? input.opportunity_score)
+  );
+  const source = normalizeEnum(input.source, VALID_SOURCES, "SCAN");
+  const symbol = normalizeSymbol(input.symbol);
+  const score = Number(input.score ?? input.opportunity_score) || 0;
+  const scoreBucket = input.scoreBucket || scoreBucketFromScore(score);
+  const now = new Date();
+  const generatedAt = input.generatedAt || input.generated_at
+    ? new Date(input.generatedAt || input.generated_at)
+    : now;
+  const dedupeKey = buildDedupeKey({
+    userId: ownerId,
+    category,
+    symbol,
+    severity,
+    scoreBucket,
+  });
+
+  return db.alert.upsert({
+    where: {
+      userId_dedupeKey: {
+        userId: ownerId,
+        dedupeKey,
+      },
+    },
+    create: {
+      userId: ownerId,
+      scanId: input.scanId || null,
+      category,
+      severity,
+      status: "ACTIVE",
+      source,
+      symbol,
+      title: input.title || `${symbol} requires attention`,
+      message: input.message || "Alert generated by trading cockpit rules.",
+      score,
+      confidence:
+        input.confidence == null ? null : Number(input.confidence) || null,
+      backtestReturn:
+        input.backtestReturn == null && input.backtest_return == null
+          ? null
+          : Number(input.backtestReturn ?? input.backtest_return) || null,
+      drawdown:
+        input.drawdown == null ? null : Number(input.drawdown) || null,
+      reasons: input.reasons || [],
+      metadata: input.metadata || {},
+      scoreBucket,
+      dedupeKey,
+      occurrences: 1,
+      generatedAt,
+      lastTriggeredAt: generatedAt,
+      expiresAt: input.expiresAt || input.expires_at || null,
+      raw: input.raw || input,
+    },
+    update: {
+      scanId: input.scanId || undefined,
+      status: "ACTIVE",
+      title: input.title || undefined,
+      message: input.message || undefined,
+      source,
+      score,
+      confidence:
+        input.confidence == null ? undefined : Number(input.confidence) || null,
+      backtestReturn:
+        input.backtestReturn == null && input.backtest_return == null
+          ? undefined
+          : Number(input.backtestReturn ?? input.backtest_return) || null,
+      drawdown:
+        input.drawdown == null ? undefined : Number(input.drawdown) || null,
+      reasons: input.reasons || undefined,
+      metadata: input.metadata || undefined,
+      scoreBucket,
+      generatedAt,
+      lastTriggeredAt: generatedAt,
+      acknowledgedAt: null,
+      snoozedUntil: null,
+      resolvedAt: null,
+      actionedBy: null,
+      actionReason: null,
+      raw: input.raw || input,
+      occurrences: {
+        increment: 1,
+      },
+    },
+  });
+}
+
+async function action(userId, id, status, options = {}) {
+  const ownerId = requireUserId(userId);
+  const normalizedStatus = normalizeEnum(status, VALID_STATUSES, "");
+  if (!normalizedStatus) {
+    throw new Error("Invalid alert status.");
+  }
+
+  const now = new Date();
+  const existing = await prisma.run((db) =>
+    db.alert.findFirst({ where: { id, userId: ownerId } })
+  );
+  if (!existing) {
+    throw new Error("Alert not found.");
+  }
+
+  const auditEvent = {
+    action: normalizedStatus,
+    actedBy: ownerId,
+    actedAt: now.toISOString(),
+    note: options.reason || null,
+  };
+  const currentMetadata =
+    existing.metadata && typeof existing.metadata === "object"
+      ? existing.metadata
+      : {};
+  const currentTimeline = Array.isArray(currentMetadata.timeline)
+    ? currentMetadata.timeline
+    : [];
+
+  const data = {
+    status: normalizedStatus,
+    actionedBy: ownerId,
+    actionReason: options.reason || null,
+    metadata: {
+      ...currentMetadata,
+      timeline: [...currentTimeline, auditEvent],
+    },
+  };
+
+  if (normalizedStatus === "ACKNOWLEDGED") {
+    data.acknowledgedAt = now;
+  }
+  if (normalizedStatus === "SNOOZED") {
+    data.snoozedUntil = options.snoozedUntil
+      ? new Date(options.snoozedUntil)
+      : new Date(now.getTime() + 60 * 60 * 1000);
+  }
+  if (["RESOLVED", "EXPIRED"].includes(normalizedStatus)) {
+    data.resolvedAt = now;
+  }
+
+  const updated = await prisma.run(async (db) => {
+    const result = await db.alert.updateMany({
+      where: { id, userId: ownerId },
+      data,
+    });
+    if (result.count !== 1) {
+      throw new Error("Alert not found.");
+    }
+    return db.alert.findFirst({ where: { id, userId: ownerId } });
+  });
+
+  return updated;
+}
+
+function listRules(userId) {
+  const ownerId = requireUserId(userId);
+  return prisma.run((db) =>
+    db.alertRule.findMany({
+      where: { userId: ownerId },
+      orderBy: [{ enabled: "desc" }, { createdAt: "desc" }],
+    })
+  );
+}
+
+function createRule(userId, input = {}) {
+  const ownerId = requireUserId(userId);
+  const name = String(input.name || "").trim();
+  if (!name) {
+    throw new Error("Alert rule name is required.");
+  }
+  return prisma.run((db) =>
+    db.alertRule.create({
+      data: {
+        userId: ownerId,
+        name,
+        enabled: input.enabled !== false,
+        category: input.category
+          ? normalizeEnum(input.category, VALID_CATEGORIES, "SCANNER")
+          : null,
+        severity: input.severity
+          ? normalizeEnum(input.severity, VALID_SEVERITIES, "MEDIUM")
+          : null,
+        conditions: input.conditions || {},
+        actions: input.actions || { notifyTelegram: true },
+      },
+    })
+  );
+}
+
+async function getHealth(userId) {
+  const ownerId = requireUserId(userId);
+  const [created, deduped, resolved, active, rows] = await prisma.run((db) =>
+    Promise.all([
+      db.alert.count({ where: { userId: ownerId } }),
+      db.alert.aggregate({
+        where: { userId: ownerId },
+        _sum: { occurrences: true },
+      }),
+      db.alert.count({ where: { userId: ownerId, status: "RESOLVED" } }),
+      db.alert.count({
+        where: { userId: ownerId, status: { in: ACTIVE_STATUSES } },
+      }),
+      db.alert.findMany({
+        where: {
+          userId: ownerId,
+          resolvedAt: { not: null },
+        },
+        select: { createdAt: true, resolvedAt: true },
+        take: 500,
+      }),
+    ])
+  );
+  const lifetimeValues = rows
+    .map((row) => new Date(row.resolvedAt).getTime() - new Date(row.createdAt).getTime())
+    .filter((value) => Number.isFinite(value) && value >= 0);
+  const avgLifetimeMs =
+    lifetimeValues.length > 0
+      ? lifetimeValues.reduce((sum, value) => sum + value, 0) /
+        lifetimeValues.length
+      : null;
+  const totalOccurrences = deduped._sum.occurrences || created;
+
+  return {
+    created,
+    active,
+    resolved,
+    deduped: Math.max(0, totalOccurrences - created),
+    avg_lifetime_minutes:
+      avgLifetimeMs == null ? null : Math.round(avgLifetimeMs / 60000),
+    resolution_rate: created > 0 ? resolved / created : 0,
+  };
+}
+
+module.exports = {
+  action,
+  buildDedupeKey,
+  createRule,
+  getHealth,
+  getMutedCategories,
+  list,
+  muteCategory,
+  normalizeEnum,
+  scoreBucketFromScore,
+  severityFromScore,
+  listRules,
+  unmuteCategory,
+  upsertAlert,
+};

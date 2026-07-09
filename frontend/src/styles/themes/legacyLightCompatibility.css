@@ -1,0 +1,748 @@
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    position: static;
+    min-height: auto;
+  }
+
+  .tabs-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tabs-nav button {
+    text-align: center;
+  }
+
+  .dashboard-header,
+  .alerts-panel-header,
+  .freshness-warning {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-controls {
+    justify-content: flex-start;
+  }
+
+  .ibkr-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .validation-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .parameter-sweep-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .validation-chart-grid,
+  .validation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .command-center-bar {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .command-scan-button {
+    grid-column: 1 / -1;
+  }
+
+  .overview-command-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-focus-grid,
+  .signal-change-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .app {
+    padding: 12px;
+  }
+
+  .app-shell {
+    gap: 12px;
+  }
+
+  .dashboard-header,
+  .ibkr-panel,
+  .ibkr-card,
+  .app-sidebar {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .toolbar-controls,
+  .scan-controls,
+  .ibkr-actions,
+  .validation-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .toolbar-controls > *,
+  .scan-controls > *,
+  .ibkr-actions > *,
+  .validation-actions > * {
+    width: 100%;
+  }
+
+  .tabs-nav,
+  .ibkr-form-grid,
+  .ibkr-status-grid,
+  .validation-metrics-grid,
+  .validation-warning-grid,
+  .validation-status-banner,
+  .parameter-sweep-controls,
+  .command-center-bar,
+  .overview-command-grid,
+  .pending-trade-card {
+    grid-template-columns: 1fr;
+  }
+
+  .critical-panel-header,
+  .section-heading,
+  .critical-action-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-market-filters button,
+  .pending-trade-actions button {
+    flex: 1 1 100%;
+  }
+
+  .validation-hero,
+  .validation-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .validation-chart-canvas {
+    height: 260px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+}
+
+html[data-theme="light"] body {
+  background: var(--light-surface) !important;
+  color: #17212b;
+}
+
+html[data-theme="light"] {
+  --bg-deep: var(--light-surface);
+  --bg-panel: rgba(255, 255, 255, 0.9);
+  --bg-panel-strong: rgba(248, 251, 253, 0.96);
+  --border-soft: rgba(83, 115, 143, 0.22);
+  --border-bright: rgba(52, 109, 150, 0.48);
+  --text-primary: var(--surface-3);
+  --text-secondary: #52687b;
+  --text-muted: #75899b;
+  --cyan: #2678a9;
+  --blue: #386fb6;
+  --green: #168458;
+  --amber: #9a6500;
+  --red: #b4233a;
+  --purple: #7153a6;
+  --shadow-panel: 0 18px 46px rgba(42, 67, 92, 0.1);
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body,
+html[data-theme="light"] #root,
+html[data-theme="light"] .app {
+  background-color: var(--light-surface) !important;
+  color: var(--surface-3);
+}
+
+html[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 12% 0%, rgba(75, 139, 190, 0.11), transparent 34%),
+    linear-gradient(135deg, var(--light-surface) 0%, var(--text-bright) 52%, #e8f0f6 100%) !important;
+}
+
+html[data-theme="light"] body::before {
+  background:
+    linear-gradient(rgba(38, 72, 99, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 72, 99, 0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+html[data-theme="light"] .login-shell {
+  background:
+    radial-gradient(circle at top left, rgba(65, 132, 190, 0.14), transparent 34%),
+    var(--light-surface);
+}
+
+html[data-theme="light"] .landing-shell {
+  background: var(--light-surface);
+  color: var(--surface-3);
+}
+
+html[data-theme="light"] .landing-hero {
+  background:
+    linear-gradient(90deg, rgba(237, 243, 248, 0.96) 0%, rgba(237, 243, 248, 0.78) 50%, rgba(237, 243, 248, 0.2) 100%),
+    radial-gradient(circle at 35% 20%, rgba(88, 166, 255, 0.2), transparent 42%);
+}
+
+html[data-theme="light"] .landing-hero h1,
+html[data-theme="light"] .landing-nav strong,
+html[data-theme="light"] .landing-status-strip strong {
+  color: #132231;
+}
+
+html[data-theme="light"] .landing-hero-copy p:not(.eyebrow),
+html[data-theme="light"] .landing-feature p {
+  color: #536779;
+}
+
+html[data-theme="light"] .landing-status-strip div,
+html[data-theme="light"] .landing-feature {
+  border-color: #c5d3df;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+html[data-theme="light"] .landing-link-button,
+html[data-theme="light"] .landing-secondary {
+  border-color: #b8cada;
+  background: rgba(255, 255, 255, 0.76);
+  color: #173247;
+}
+
+html[data-theme="light"]
+  :where(
+    .dashboard-header,
+    .cockpit-controls,
+    .stock-list,
+    .detail-panel,
+    .scanner-table-layout,
+    .quick-filters,
+    .scan-controls,
+    .sort-controls,
+    .search-control,
+    .threshold-control,
+    .toggle-control,
+    .view-toggle,
+    .market-filter-controls,
+    .ai-reasoning-panel,
+    .confidence-breakdown-panel,
+    .portfolio-fit-panel
+  ) {
+  border-color: #c5d3df !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-shadow:
+    0 14px 36px rgba(42, 67, 92, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+}
+
+html[data-theme="light"] .app-sidebar > div:first-child {
+  border-color: #c9d7e2;
+  background: #f5f9fc !important;
+}
+
+html[data-theme="light"] .app-content {
+  color: var(--surface-3);
+}
+
+html[data-theme="light"]
+  :where(
+    .app-sidebar,
+    .login-card,
+    [class$="-panel"],
+    [class*="-panel "],
+    [class$="-card"],
+    [class*="-card "]
+  ):not(.heatmap-card):not(.critical-action-card) {
+  border-color: #c9d6e2 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow:
+    0 12px 34px rgba(42, 67, 92, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+}
+
+html[data-theme="light"]
+  :where(
+    .command-center-bar,
+    .portfolio-section-header,
+    .approval-sidebar,
+    .approval-sidebar-item,
+    .scanner-table-panel,
+    .stock-card,
+    .trade-row,
+    .paper-row,
+    .risk-table-row,
+    .summary-panel,
+    .metric-card,
+    .command-tile,
+    .pending-trade-metrics div,
+    .approval-metrics div,
+    .approval-detail-grid div,
+    .approval-timeline div,
+    .pre-trade-metrics div,
+    .pre-trade-detail-grid article
+  ) {
+  border-color: #c9d6e2 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+html[data-theme="light"]
+  :where(
+    .metrics div,
+    .detail-stats div,
+    .progress-grid > div,
+    .paper-portfolio-grid > div,
+    .automation-grid > div,
+    .safety-grid > div
+  ) {
+  border-color: #cedae4 !important;
+  background: #f4f8fb !important;
+}
+
+html[data-theme="light"]
+  :where(
+    h1,
+    h2,
+    h3,
+    h4,
+    .app-sidebar strong,
+    .stock-card-main strong,
+    .command-tile strong,
+    .summary-panel strong,
+    .metric-card strong,
+    .approval-card strong,
+    .pending-trade-card strong,
+    .detail-stats dd,
+    .metrics dd,
+    .scanner-table strong
+  ) {
+  color: #152433 !important;
+}
+
+html[data-theme="light"]
+  :where(
+    body,
+    p,
+    span,
+    dt,
+    label,
+    small,
+    .subtitle,
+    .alerts-empty,
+    .login-note,
+    .stock-card-company
+  ) {
+  color: #536779;
+}
+
+html[data-theme="light"] .eyebrow,
+html[data-theme="light"] .tabs-section-label {
+  color: #346d96;
+}
+
+html[data-theme="light"]
+  :where(input, select, textarea, .tabs-nav button, .direction-toggle, .view-toggle button) {
+  border-color: #bdcddd !important;
+  background: #f7fafc !important;
+  color: #17212b !important;
+}
+
+html[data-theme="light"] .login-form input {
+  border-color: #bdcddd !important;
+  background: #f7fafc !important;
+  color: #17212b !important;
+}
+
+html[data-theme="light"] .login-mode-toggle button,
+html[data-theme="light"] .login-form button {
+  border-color: #adc3d5 !important;
+  background: #e7f0f7 !important;
+  color: #173247 !important;
+}
+
+html[data-theme="light"] .login-mode-toggle button.active,
+html[data-theme="light"] .login-form button {
+  border-color: #2f8a62 !important;
+  background: #dff2e8 !important;
+  color: #15583e !important;
+}
+
+html[data-theme="light"] :where(input, select, textarea)::placeholder {
+  color: #8293a3;
+}
+
+html[data-theme="light"] .tabs-nav button:hover,
+html[data-theme="light"] .tabs-nav button.active,
+html[data-theme="light"] .view-toggle button.active,
+html[data-theme="light"] .direction-toggle:hover {
+  border-color: #3f82b5;
+  background: #e4f0f8;
+  color: #173b56;
+}
+
+html[data-theme="light"]
+  :where(
+    .filters button,
+    .quick-filters button,
+    .card-actions button,
+    .watchlist-button,
+    .direction-toggle,
+    .dashboard-market-filters button,
+    .pending-trade-actions button
+  ) {
+  border-color: #b8cad9 !important;
+  background: #f3f7fa !important;
+  color: #20384b !important;
+  box-shadow: none;
+}
+
+html[data-theme="light"]
+  :where(
+    .filters button:hover,
+    .filters button.active,
+    .quick-filters button:hover,
+    .quick-filters button.active,
+    .view-toggle button:hover,
+    .view-toggle button.active,
+    .direction-toggle:hover
+  ) {
+  border-color: #4382ae !important;
+  background: #dfeef7 !important;
+  color: #173b56 !important;
+}
+
+html[data-theme="light"] .stock-card {
+  border-color: #bfd0dd !important;
+  border-left-color: #2e9c6a !important;
+  background: var(--color-white) !important;
+}
+
+html[data-theme="light"] .stock-card.selected {
+  border-color: #2e9c6a !important;
+  background: #eef9f3 !important;
+}
+
+html[data-theme="light"] .stock-card-main {
+  background: transparent !important;
+}
+
+html[data-theme="light"] .market-badge {
+  border-color: #bdcddd;
+  background: #e9f0f5;
+  color: #496174;
+}
+
+html[data-theme="light"] .market-badge.us {
+  border-color: #72a8cf;
+  color: #245f89;
+}
+
+html[data-theme="light"] .market-badge.sgx {
+  border-color: #72b994;
+  color: #176b47;
+}
+
+html[data-theme="light"] .market-badge.currency {
+  color: #324b5f;
+}
+
+html[data-theme="light"] .regime-pill {
+  border-color: #9bcbb1 !important;
+  background: linear-gradient(135deg, #e0f4e8, #f5fbf7) !important;
+}
+
+html[data-theme="light"] .regime-pill span {
+  color: #47725b;
+}
+
+html[data-theme="light"] .regime-pill strong {
+  color: #17633f;
+}
+
+html[data-theme="light"] .freshness-badge.critical,
+html[data-theme="light"] .freshness-warning.critical {
+  border-color: #dc8795 !important;
+  background: #fdebef !important;
+}
+
+html[data-theme="light"] .freshness-badge.critical strong,
+html[data-theme="light"] .freshness-warning.critical strong {
+  color: #9d2439 !important;
+}
+
+html[data-theme="light"] .freshness-warning.critical span {
+  color: #754855;
+}
+
+html[data-theme="light"]
+  :where(
+    .progress-row span,
+    .stock-card-main span,
+    .detail-stats dt,
+    .metrics dt,
+    .list-header span,
+    .alerts-panel-header span,
+    .scan-controls label,
+    .sort-controls label,
+    .search-control label,
+    .threshold-control,
+    .market-filter-controls label
+  ) {
+  color: #587084 !important;
+}
+
+html[data-theme="light"] .progress-row strong,
+html[data-theme="light"] .detail-stats dd,
+html[data-theme="light"] .metrics dd {
+  color: var(--surface-3) !important;
+}
+
+html[data-theme="light"] .progress-track {
+  background: #dbe6ee !important;
+}
+
+html[data-theme="light"] .detail-reasons,
+html[data-theme="light"] .detail-reasons ul,
+html[data-theme="light"] .reasons {
+  color: #41586a !important;
+}
+
+html[data-theme="light"] .critical-action-card {
+  border-color: #c4d2de !important;
+  background: #f7fafc !important;
+  box-shadow: 0 8px 20px rgba(42, 67, 92, 0.06);
+}
+
+html[data-theme="light"] .critical-action-card.warning {
+  border-color: #d6b261 !important;
+  background: #fff8e8 !important;
+}
+
+html[data-theme="light"] .critical-action-card.danger {
+  border-color: #dc8b98 !important;
+  background: #fff0f3 !important;
+}
+
+html[data-theme="light"] .critical-action-card.success {
+  border-color: #79b798 !important;
+  background: #edf9f2 !important;
+}
+
+html[data-theme="light"] .critical-action-card.neutral {
+  border-color: #b9c9d6 !important;
+  background: #f2f6f9 !important;
+}
+
+html[data-theme="light"] .critical-action-card strong {
+  color: #1b2d3c !important;
+}
+
+html[data-theme="light"] .critical-action-card p {
+  color: #5c7182 !important;
+}
+
+html[data-theme="light"] .critical-action-card button {
+  border-color: #9db8cd !important;
+  background: #e7f0f6 !important;
+  color: #214b68 !important;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .critical-action-card button:hover {
+  border-color: #4382ae !important;
+  background: #d9eaf5 !important;
+}
+
+html[data-theme="light"] .dashboard-market-scope {
+  border-color: #9ebed4;
+  background: #dfeef7 !important;
+  color: #245f85 !important;
+}
+
+html[data-theme="light"] .dashboard-market-filters button.active {
+  border-color: #319367 !important;
+  background: #e0f3e8 !important;
+  color: #17613f !important;
+}
+
+html[data-theme="light"] .active-strategy-grid div,
+html[data-theme="light"] .strategy-formula-card {
+  border-color: #c6d5e0 !important;
+  background: #f3f7fa !important;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .active-strategy-grid span,
+html[data-theme="light"] .strategy-formula-card span,
+html[data-theme="light"] .strategy-formula-card summary {
+  color: #527086 !important;
+}
+
+html[data-theme="light"] .active-strategy-grid strong,
+html[data-theme="light"] .strategy-formula-card strong {
+  color: var(--surface-3) !important;
+}
+
+html[data-theme="light"] .strategy-formula-card p {
+  color: #52687b !important;
+}
+
+html[data-theme="light"] .admin-mode-badge {
+  border-color: #9fbcd2;
+  background: #e4f0f8;
+  color: #285b7e;
+}
+
+html[data-theme="light"] .theme-toggle {
+  border-color: #9fbcd2;
+  background: #e4f0f8;
+  color: #173b56;
+}
+
+html[data-theme="light"] .theme-toggle:hover {
+  border-color: #3f82b5;
+  background: #d7eaf6;
+}
+
+html[data-theme="light"] .sidebar-user-panel {
+  border-color: #d3dee8;
+}
+
+html[data-theme="light"] .scanner-table th {
+  background: #e7eff6;
+}
+
+html[data-theme="light"] .scanner-table td,
+html[data-theme="light"] .scanner-table th {
+  border-color: #d4dee8;
+  color: #263746;
+}
+
+html[data-theme="light"] .scanner-table tbody tr:hover,
+html[data-theme="light"] .scanner-table tbody tr.selected {
+  background: #e5f1f8;
+}
+
+html[data-theme="light"] .positive,
+html[data-theme="light"] .badge.buy {
+  color: #087a4a !important;
+}
+
+html[data-theme="light"] .negative,
+html[data-theme="light"] .badge.sell,
+html[data-theme="light"] .engine-error {
+  color: #b4232c !important;
+}
+
+html[data-theme="light"] .badge.hold {
+  color: #8a5a00 !important;
+}
+
+html[data-theme="light"] .chart-empty,
+html[data-theme="light"] .state-panel {
+  border-color: #c9d6e2;
+  background: rgba(255, 255, 255, 0.86);
+  color: #536779;
+}
+.degraded-mode-banner {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 30;
+  margin-bottom: 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--warning, #f0ad4e) 65%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warning, #f0ad4e) 16%, var(--panel-bg, #101923));
+  color: var(--text-primary, #f5f7fa);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
+  backdrop-filter: blur(14px);
+}
+.detail-provider-warning {
+  border: 1px solid color-mix(in srgb, var(--warning, var(--warning-dark)) 55%, transparent);
+  background: color-mix(in srgb, var(--warning, var(--warning-dark)) 12%, transparent);
+  color: var(--text-primary);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.detail-provider-warning p {
+  margin: 0;
+}
+
+.detail-provider-warning p + p {
+  margin-top: 6px;
+}
+
+.news-health-panel {
+  border: 1px solid var(--border, var(--border-subtle));
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 14px;
+}
+
+.news-health-header,
+.news-health-row,
+.news-health-row > div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.news-health-header > span,
+.news-health-row span {
+  color: var(--muted, #8fa0b5);
+  font-size: 0.76rem;
+}
+
+.news-health-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.news-health-row {
+  background: var(--surface-muted, rgba(15, 24, 35, 0.72));
+  border-left: 3px solid var(--border, var(--border-subtle));
+  border-radius: 6px;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.news-health-row > div {
+  gap: 8px;
+}
+
+.news-health-row.healthy {
+  border-left-color: var(--success, var(--success));
+}
+
+.news-health-row.warning {
+  border-left-color: var(--warning, var(--warning-dark));
+}
+
+.news-health-row.unavailable {
+  border-left-color: var(--danger, #ff6b75);
+}
+
+.news-health-row p {
+  color: var(--muted, #8fa0b5);
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.news-health-stats {
+  flex: 0 0 auto;
+}

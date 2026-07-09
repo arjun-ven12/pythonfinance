@@ -1,0 +1,741 @@
+/*
+ * Mobile-first responsive system.
+ * Breakpoints:
+ * - mobile: <768px
+ * - tablet: 768-1199px
+ * - desktop: >=1200px
+ * - wide: >=1600px
+ */
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.app {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-md);
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+}
+
+.app-sidebar {
+  display: none !important;
+}
+
+.app-content,
+.dashboard-page,
+.scanner-page,
+.approval-page,
+.portfolio-page,
+.strategy-lab-page,
+.settings-page,
+.watchlist-page,
+.alerts-page,
+.validation-page,
+.playbook-page,
+.broker-page {
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-header,
+.command-center-bar,
+.toolbar-controls,
+.scan-controls,
+.sort-controls,
+.search-control,
+.quick-filters,
+.filters,
+.settings-grid,
+.strategy-lab-form-grid,
+.backtest-config-grid,
+.portfolio-overview-grid,
+.portfolio-construction-grid,
+.validation-metrics-grid,
+.alert-stats-grid,
+.overview-command-grid,
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.dashboard-header {
+  min-height: auto;
+  padding: var(--space-lg);
+}
+
+.dashboard-header h1 {
+  font-size: clamp(24px, 8vw, 34px);
+}
+
+.toolbar-controls > *,
+.scan-controls > *,
+.sort-controls > *,
+.search-control > *,
+.threshold-control > *,
+.setting-field,
+.settings-grid > *,
+.login-form label {
+  min-width: 0;
+  width: 100%;
+}
+
+button,
+input,
+select,
+textarea,
+.theme-toggle,
+.watchlist-button,
+.direction-toggle,
+.view-toggle button,
+.tabs-nav button,
+.card-actions button {
+  min-height: 44px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+}
+
+.chart-canvas,
+.validation-chart-canvas,
+.stock-chart-panel,
+.chart-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chart-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 260px;
+}
+
+.validation-chart-canvas,
+.stock-chart-canvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.recharts-responsive-container,
+.recharts-wrapper,
+.recharts-surface {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+
+.chart-canvas > .recharts-responsive-container,
+.validation-chart-canvas > .recharts-responsive-container {
+  min-height: inherit;
+}
+
+.scanner-table-layout,
+.scanner-table-panel,
+.validation-table,
+.risk-table,
+.responsive-table {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.scanner-table,
+.validation-table table,
+.risk-table table {
+  min-width: 0;
+}
+
+.scanner-table-layout {
+  grid-template-columns: 1fr;
+}
+
+.scanner-table-panel {
+  overflow-x: visible;
+}
+
+.scanner-table {
+  display: block;
+  min-width: 0;
+}
+
+.scanner-table thead {
+  display: none;
+}
+
+.scanner-table tbody,
+.scanner-table tr,
+.scanner-table td {
+  display: block;
+  width: 100%;
+}
+
+.scanner-table tr {
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--terminal-line);
+  border-radius: var(--radius-card);
+  background: var(--terminal-surface-muted);
+  padding: var(--space-sm);
+}
+
+.scanner-table td {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--terminal-line);
+  padding: 9px 4px;
+  white-space: normal;
+}
+
+.scanner-table td:last-child {
+  border-bottom: 0;
+}
+
+.watchlist-terminal-layout,
+.watchlist-row,
+.approval-workspace,
+.portfolio-layout,
+.strategy-lab-workspace,
+.stock-universe-compose,
+.dashboard-focus-grid,
+.critical-action-grid,
+.pending-trade-preview-list,
+.active-strategy-metrics,
+.watchlist-row-metrics,
+.watchlist-detail-metrics {
+  grid-template-columns: 1fr !important;
+  min-width: 0;
+}
+
+.watchlist-list-header {
+  display: none;
+}
+
+.watchlist-detail-panel {
+  position: static;
+}
+
+.watchlist-row-actions,
+.watchlist-detail-actions,
+.card-actions,
+.pending-trade-actions {
+  justify-content: stretch;
+}
+
+.watchlist-row-actions button,
+.watchlist-detail-actions button,
+.card-actions button,
+.pending-trade-actions button {
+  flex: 1 1 140px;
+}
+
+.approval-sidebar,
+.approval-detail-panel,
+.pre-trade-card,
+.stock-detail-drawer,
+.mobile-drawer {
+  max-width: 100%;
+}
+
+.stock-detail-drawer {
+  position: fixed !important;
+  inset: auto 0 0 !important;
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 22px 22px 0 0 !important;
+}
+
+.tabs-shell {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.mobile-drawer .tabs-menu-toggle {
+  display: none;
+}
+
+.mobile-drawer .tabs-nav {
+  display: grid;
+}
+
+.mobile-drawer-brand {
+  display: grid;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+}
+
+.mobile-drawer-brand strong {
+  color: var(--terminal-text);
+  font-size: 18px;
+}
+
+.strategy-lab-section-nav,
+.portfolio-section-tabs,
+.broker-section-nav,
+.playbook-v2-nav {
+  display: flex;
+  gap: var(--space-xs);
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+  scroll-snap-type: x proximity;
+}
+
+.strategy-lab-section-nav > *,
+.portfolio-section-tabs > *,
+.broker-section-nav > *,
+.playbook-v2-nav > * {
+  flex: 0 0 auto;
+  min-height: 44px;
+  scroll-snap-align: start;
+}
+
+.mobile-card-list,
+.approval-list,
+.alert-list,
+.watchlist-list {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 768px) {
+  .app {
+    padding: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .app-shell {
+    gap: var(--space-lg);
+  }
+
+  .app-sidebar {
+    position: sticky;
+    top: var(--space-lg);
+    display: grid !important;
+    min-height: auto;
+    max-height: calc(100vh - var(--space-xl) * 2);
+    overflow: auto;
+  }
+
+  .tabs-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    min-height: 44px;
+    width: 100%;
+    border: 1px solid var(--terminal-line);
+    border-radius: var(--radius-control);
+    background: var(--terminal-input);
+    color: var(--terminal-text);
+    padding: 10px 12px;
+    font-weight: 840;
+  }
+
+  .app-sidebar .tabs-nav {
+    display: none;
+  }
+
+  .app-sidebar .tabs-nav.open {
+    display: grid;
+  }
+
+  .toolbar-controls,
+  .scan-controls,
+  .sort-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-command-grid,
+  .summary-grid,
+  .alert-stats-grid,
+  .validation-metrics-grid,
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .watchlist-row-metrics,
+  .watchlist-detail-metrics,
+  .active-strategy-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .scanner-table-panel {
+    overflow-x: auto;
+  }
+
+  .scanner-table {
+    display: table;
+    min-width: 860px;
+  }
+
+  .scanner-table thead {
+    display: table-header-group;
+  }
+
+  .scanner-table tbody {
+    display: table-row-group;
+  }
+
+  .scanner-table tr {
+    display: table-row;
+    margin-bottom: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .scanner-table td,
+  .scanner-table th {
+    display: table-cell;
+    width: auto;
+    padding: 12px;
+    white-space: nowrap;
+  }
+
+  .scanner-table td {
+    border-bottom: 1px solid var(--terminal-line);
+  }
+
+  .bottom-action-bar {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  :where(
+    .engine-status-grid,
+    .active-strategy-grid,
+    .risk-summary-grid,
+    .risk-gauge-grid,
+    .journal-grid,
+    .manual-trade-layout,
+    .portfolio-risk-grid,
+    .portfolio-construction-card-grid,
+    .best-additions-grid,
+    .validation-chart-grid,
+    .validation-warning-grid,
+    .strategy-builder-grid,
+    .strategy-run-grid,
+    .strategy-lab-metrics-grid,
+    .broker-grid,
+    .broker-capability-grid,
+    .playbook-v2-grid,
+    .playbook-v2-charts,
+    .settings-grid,
+    .stock-universe-form,
+    .pre-trade-form,
+    .pre-trade-summary-grid,
+    .alerts-management-grid,
+    .alert-rule-grid
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  :where(.approval-workspace, .dashboard-focus-grid, .watchlist-terminal-layout) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .app {
+    padding: clamp(24px, 2.4vw, 40px);
+  }
+
+  .app-shell {
+    grid-template-columns: 236px minmax(0, 1fr);
+    gap: var(--space-xl);
+  }
+
+  .app-sidebar {
+    min-height: calc(100vh - 56px);
+  }
+
+  .app-sidebar .tabs-menu-toggle {
+    display: none;
+  }
+
+  .app-sidebar .tabs-nav {
+    display: grid;
+  }
+
+  .dashboard-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .command-center-bar {
+    grid-template-columns: repeat(6, minmax(130px, 1fr)) auto;
+  }
+
+  .overview-command-grid,
+  .summary-grid,
+  .alert-stats-grid,
+  .validation-metrics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .toolbar-controls {
+    grid-template-columns: repeat(4, max-content);
+    align-items: center;
+    justify-content: end;
+  }
+
+  .scan-controls,
+  .sort-controls,
+  .search-control {
+    grid-template-columns: auto minmax(140px, 1fr);
+    align-items: center;
+  }
+
+  .scanner-table-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  }
+
+  .watchlist-terminal-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px) !important;
+  }
+
+  .watchlist-row {
+    grid-template-columns: minmax(150px, 0.75fr) minmax(280px, 1.1fr) minmax(170px, 0.75fr) minmax(118px, auto) !important;
+  }
+
+  .watchlist-row-metrics,
+  .watchlist-detail-metrics {
+    grid-template-columns: repeat(5, minmax(54px, 1fr)) !important;
+  }
+
+  .approval-workspace {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr) !important;
+  }
+
+  .dashboard-focus-grid,
+  .stock-universe-compose {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.42fr) !important;
+  }
+
+  .stock-detail-drawer {
+    inset: 0 0 0 auto !important;
+    width: min(460px, 92vw);
+    max-height: none;
+    border-radius: 22px 0 0 22px !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1699px) {
+  .dashboard-header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .toolbar-controls {
+    grid-template-columns: repeat(3, minmax(220px, max-content));
+    justify-content: start;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .toolbar-controls > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .header-setting-summary {
+    min-width: 0;
+  }
+
+  .header-setting-summary strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@media (min-width: 1600px) {
+  .app {
+    padding-inline: 40px;
+  }
+
+  .app-shell {
+    grid-template-columns: 252px minmax(0, 1fr);
+  }
+
+  .overview-command-grid,
+  .summary-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .app-sidebar {
+    display: none !important;
+  }
+
+  :where(
+    .command-center-bar,
+    .overview-command-grid,
+    .summary-grid,
+    .alert-stats-grid,
+    .validation-metrics-grid,
+    .engine-status-grid,
+    .active-strategy-grid,
+    .risk-summary-grid,
+    .risk-gauge-grid,
+    .manual-trade-layout,
+    .journal-grid,
+    .journal-form-grid,
+    .portfolio-risk-grid,
+    .portfolio-construction-card-grid,
+    .best-additions-grid,
+    .validation-chart-grid,
+    .validation-warning-grid,
+    .validation-readout-card dl,
+    .strategy-builder-grid,
+    .strategy-run-grid,
+    .strategy-lab-metrics-grid,
+    .strategy-lab-form-grid,
+    .parameter-sweep-grid,
+    .broker-grid,
+    .broker-capability-grid,
+    .broker-log-grid,
+    .playbook-v2-grid,
+    .playbook-v2-charts,
+    .playbook-v2-version-row,
+    .playbook-v2-export-grid,
+    .settings-grid,
+    .stock-universe-compose,
+    .stock-universe-form,
+    .stock-universe-members-grid,
+    .engine-safety-grid,
+    .pre-trade-form,
+    .pre-trade-summary-grid,
+    .pre-trade-impact-grid,
+    .alerts-management-grid,
+    .alert-rule-grid,
+    .alert-delivery-grid,
+    .approval-detail-grid,
+    .approval-metrics,
+    .approval-action-grid
+  ) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-content :where(table) {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .app-content :where(thead) {
+    display: none;
+  }
+
+  .app-content :where(tbody, tr, td) {
+    display: block;
+    width: 100%;
+  }
+
+  .app-content :where(tr) {
+    margin-bottom: var(--space-sm);
+    border: 1px solid var(--terminal-line);
+    border-radius: var(--radius-card);
+    background: var(--terminal-surface-muted);
+    padding: var(--space-sm);
+  }
+
+  .app-content :where(td) {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    border-bottom: 1px solid var(--terminal-line);
+    padding: 9px 4px;
+    white-space: normal !important;
+  }
+
+  .app-content :where(td:last-child) {
+    border-bottom: 0;
+  }
+
+  .login-shell {
+    padding: var(--space-md);
+  }
+
+  .login-card {
+    width: min(100%, 440px);
+  }
+
+  .toolbar-controls,
+  .dashboard-market-filters,
+  .quick-filters,
+  .card-actions,
+  .critical-action-card,
+  .pending-trade-card,
+  .alert-card,
+  .approval-card {
+    align-items: stretch;
+  }
+
+  .critical-action-card,
+  .pending-trade-card {
+    flex-direction: column;
+  }
+
+  .command-tile,
+  .command-scan-button {
+    min-height: 58px;
+  }
+
+  .watchlist-row {
+    padding: var(--space-md);
+  }
+
+  .watchlist-row-main {
+    grid-template-columns: 1fr auto;
+  }
+
+  .watchlist-reason-preview span {
+    max-width: 100%;
+  }
+
+  .stock-universe-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+  }
+
+  .stock-universe-form,
+  .stock-universe-actions.vertical {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-universe-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stock-universe-card-header span {
+    white-space: normal;
+  }
+
+  .landing-nav,
+  .landing-nav-actions {
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,195 @@
+.responsive-container {
+  width: min(100%, var(--responsive-container-max, 1440px));
+  margin-inline: auto;
+}
+
+.responsive-container-narrow {
+  --responsive-container-max: 960px;
+}
+
+.responsive-container-wide {
+  --responsive-container-max: 1680px;
+}
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.responsive-grid-compact {
+  gap: var(--space-sm);
+}
+
+.responsive-grid-spacious {
+  gap: var(--space-lg);
+}
+
+.responsive-stack {
+  display: grid;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.responsive-stack-xs {
+  gap: var(--space-xs);
+}
+
+.responsive-stack-sm {
+  gap: var(--space-sm);
+}
+
+.responsive-stack-lg {
+  gap: var(--space-lg);
+}
+
+.responsive-panel {
+  min-width: 0;
+  border: 1px solid var(--terminal-line);
+  border-radius: var(--radius-panel);
+  background: var(--terminal-surface);
+  box-shadow: var(--terminal-shadow-soft), var(--terminal-highlight);
+  padding: var(--space-md);
+}
+
+.responsive-panel-muted {
+  background: var(--terminal-surface-muted);
+}
+
+.responsive-panel-raised {
+  background: var(--terminal-surface-raised);
+  box-shadow: var(--terminal-shadow), var(--terminal-highlight);
+}
+
+.responsive-table {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-drawer-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+}
+
+.mobile-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(2, 8, 15, 0.58);
+}
+
+.mobile-drawer {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  max-height: min(82vh, 720px);
+  overflow: auto;
+  border: 1px solid var(--terminal-line);
+  border-radius: 22px 22px 0 0;
+  background: var(--terminal-surface-raised);
+  box-shadow: 0 -18px 56px rgba(0, 0, 0, 0.34);
+  padding: var(--space-md);
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.mobile-drawer-header button {
+  min-height: 44px;
+  border: 1px solid var(--terminal-line);
+  border-radius: var(--radius-control);
+  background: var(--terminal-input);
+  color: var(--terminal-text);
+  padding-inline: var(--space-md);
+  font-weight: 800;
+}
+
+.bottom-action-bar {
+  position: fixed;
+  right: var(--space-sm);
+  bottom: calc(var(--space-sm) + env(safe-area-inset-bottom));
+  left: var(--space-sm);
+  z-index: 150;
+  display: none;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-xs);
+  border: 1px solid var(--terminal-line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--terminal-surface-raised) 92%, transparent);
+  box-shadow: var(--terminal-shadow);
+  padding: var(--space-xs);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.bottom-action-bar button {
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--terminal-muted);
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 840;
+}
+
+.bottom-action-bar button.active {
+  border-color: var(--terminal-line-strong);
+  background: color-mix(in srgb, var(--terminal-blue) 14%, transparent);
+  color: var(--terminal-text);
+}
+
+body.mobile-drawer-open {
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .responsive-panel {
+    padding: var(--space-lg);
+  }
+
+  .mobile-drawer {
+    right: var(--space-lg);
+    bottom: var(--space-lg);
+    left: auto;
+    width: min(420px, calc(100vw - var(--space-lg) * 2));
+    border-radius: var(--radius-panel);
+  }
+}
+
+@media (min-width: 1200px) {
+  .responsive-grid {
+    grid-template-columns: repeat(auto-fit, minmax(var(--responsive-grid-min), 1fr));
+  }
+
+  .mobile-drawer-layer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-drawer-layer,
+  .bottom-action-bar {
+    display: grid;
+  }
+
+  .responsive-table {
+    overflow-x: visible;
+  }
+}

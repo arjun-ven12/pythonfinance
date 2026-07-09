@@ -1,0 +1,5 @@
+# Runtime files are optional diagnostics/cache only.
+# Prisma is the source of truth for live trading state.
+*
+!.gitignore
+!*.py

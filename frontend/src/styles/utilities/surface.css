@@ -1,0 +1,7 @@
+
+.u-surface {
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-xl);
+  background: var(--app-surface);
+  box-shadow: var(--inner-highlight), var(--shadow-sm);
+}

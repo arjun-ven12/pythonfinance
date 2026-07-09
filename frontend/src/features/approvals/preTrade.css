@@ -1,0 +1,245 @@
+.pre-trade-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.pre-trade-form {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pre-trade-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pre-trade-form input,
+.pre-trade-form select {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  padding: 8px 10px;
+}
+
+.pre-trade-form button {
+  grid-column: 1 / -1;
+  min-height: 42px;
+}
+
+.pre-trade-results {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #27415c;
+  border-radius: 8px;
+  background: #0c141d;
+  padding: 14px;
+}
+
+.pre-trade-results-warning {
+  border-color: #a56a32;
+  background: #1a130c;
+  box-shadow: inset 4px 0 0 #f59e0b;
+}
+
+.pre-trade-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pre-trade-summary strong {
+  display: block;
+  color: var(--color-white);
+  font-size: 18px;
+}
+
+.pre-trade-summary p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+}
+
+.recommendation-badge {
+  display: inline-flex;
+  min-width: 104px;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recommendation-execute {
+  border-color: var(--success-dark);
+  background: #0d1713;
+  color: var(--success-soft-text);
+}
+
+.recommendation-wait,
+.recommendation-reduce_size {
+  border-color: #a56a32;
+  background: #211508;
+  color: #ffd38a;
+}
+
+.recommendation-reject {
+  border-color: #a64747;
+  background: #241010;
+  color: var(--danger-soft-text);
+}
+
+.pre-trade-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pre-trade-metrics div,
+.pre-trade-detail-grid article {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  background: var(--surface-0);
+}
+
+.pre-trade-metrics div {
+  padding: 12px;
+}
+
+.pre-trade-metrics span,
+.pre-trade-detail-grid h3,
+.pre-trade-detail-grid dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.pre-trade-metrics strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-white);
+}
+
+.pre-trade-metrics small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+.pre-trade-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pre-trade-detail-grid article {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 14px;
+}
+
+.pre-trade-detail-grid h3,
+.pre-trade-detail-grid p,
+.pre-trade-detail-grid ul,
+.pre-trade-detail-grid dl {
+  margin: 0;
+}
+
+.pre-trade-detail-grid p,
+.pre-trade-detail-grid li,
+.pre-trade-detail-grid small,
+.pre-trade-detail-grid dd {
+  color: var(--text-secondary);
+}
+
+.pre-trade-detail-grid ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+
+.pre-trade-detail-grid li strong,
+.pre-trade-detail-grid li span,
+.pre-trade-detail-grid li small {
+  display: block;
+}
+
+.pre-trade-detail-grid li strong {
+  color: var(--color-white);
+  font-size: 12px;
+}
+
+.pre-trade-detail-grid dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pre-trade-detail-grid dd {
+  margin: 3px 0 0;
+  font-weight: 800;
+}
+
+.proposed-order-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #376f9f;
+  border-radius: 8px;
+  background: #0c1620;
+}
+
+.proposed-order-card > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proposed-order-card strong {
+  color: var(--color-white);
+  font-size: 22px;
+}
+
+.proposed-order-card span {
+  color: var(--text-accent-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.proposed-order-card dl {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.proposed-order-card dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.proposed-order-card dd {
+  margin: 4px 0 0;
+  color: var(--text-bright);
+  font-weight: 800;
+}
+
+.proposed-order-card p {
+  margin-bottom: 0;
+  color: var(--text-secondary);
+}

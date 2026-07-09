@@ -1,0 +1,17 @@
+
+.u-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.u-inline-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.u-wrap {
+  flex-wrap: wrap;
+}

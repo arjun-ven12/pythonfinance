@@ -1,0 +1,46 @@
+@media (max-width: 767px) {
+  .scanner-page {
+    --page-gap: var(--space-4);
+    --panel-gap: var(--space-3);
+    --toolbar-height: auto;
+    --card-density: var(--space-4);
+    --desktop-max-width: 100%;
+  }
+
+  .scanner-page .scanner-controls-stack {
+    display: grid;
+    gap: var(--page-gap);
+  }
+
+  .scanner-page .cockpit-controls,
+  .scanner-page .quick-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--panel-gap);
+  }
+
+  .scanner-page .market-filter-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .scanner-page .stock-card-main {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .scanner-page .cockpit-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--page-gap);
+  }
+
+  .scanner-page .stock-list {
+    display: grid;
+    gap: var(--panel-gap);
+  }
+
+  .scanner-page .detail-panel {
+    position: static;
+  }
+}

@@ -1,0 +1,55 @@
+.st-uni-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  gap: 16px;
+}
+
+.st-uni-manage {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.st-uni-card {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--terminal-line, var(--border-subtle));
+  border-radius: 16px;
+  background: var(--terminal-surface-muted, var(--surface-0));
+  box-shadow: var(--terminal-highlight, inset 0 1px 0 rgba(255, 255, 255, 0.03));
+}
+
+.st-uni-head strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--terminal-text, var(--text-primary));
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.st-uni-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  gap: 12px;
+}
+
+.st-uni-actions,
+.st-uni-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.st-uni-quick .st-btn {
+  flex: 1;
+}
+
+@media (max-width: 1100px) {
+  .st-uni-compose,
+  .st-uni-manage,
+  .st-uni-form {
+    grid-template-columns: 1fr;
+  }
+}

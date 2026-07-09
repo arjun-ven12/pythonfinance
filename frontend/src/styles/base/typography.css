@@ -1,0 +1,30 @@
+
+body {
+  font-family: var(--font-sans);
+}
+
+.mono,
+code,
+pre,
+kbd,
+samp,
+.data-card-value,
+.detail-stats dd,
+.validation-metric-card strong,
+.scanner-table th,
+.scanner-table td,
+.validation-table th,
+.validation-table td,
+.risk-table th,
+.risk-table td,
+.strategy-sweep-table th,
+.strategy-sweep-table td,
+input[type="number"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgba(var(--accent-rgb), 0.32);
+  color: var(--color-white);
+}

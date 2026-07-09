@@ -1,0 +1,518 @@
+
+.app {
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 20px;
+  display: grid;
+  gap: 24px;
+  min-height: calc(100vh - 56px);
+  padding: 22px 20px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+
+.app-sidebar strong {
+  display: block;
+  color: var(--color-white);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.sidebar-brand {
+  display: grid;
+  gap: 14px;
+}
+
+.sidebar-brand-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidebar-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.sidebar-brand-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sidebar-brand-copy .eyebrow {
+  margin: 0;
+}
+
+.sidebar-collapse-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-accent-muted);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sidebar-brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+}
+
+.sidebar-brand-mark rect:first-child {
+  fill: rgba(16, 26, 40, 0.92);
+  stroke: rgba(88, 166, 255, 0.62);
+  stroke-width: 1.5;
+}
+
+.sidebar-brand-mark rect:nth-child(2) {
+  fill: #35c98f;
+}
+
+.sidebar-brand-mark rect:nth-child(3) {
+  fill: #69a0ff;
+}
+
+.sidebar-brand-mark rect:nth-child(4) {
+  fill: #9aa7bb;
+}
+
+.sidebar-admin-card {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.34);
+  border-radius: 16px;
+  background: rgba(24, 37, 57, 0.9);
+}
+
+.sidebar-admin-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(68, 95, 156, 0.88), rgba(43, 62, 104, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-admin-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sidebar-admin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-admin-title-row strong {
+  font-size: 14px;
+}
+
+.sidebar-admin-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #7da2ff;
+  box-shadow: 0 0 0 2px rgba(125, 162, 255, 0.18), 0 0 14px rgba(125, 162, 255, 0.45);
+}
+
+.sidebar-admin-meta {
+  color: var(--text-accent-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-mode-badge {
+  display: inline-flex;
+  margin-top: 2px;
+  min-height: 24px;
+  align-items: center;
+  border: 1px solid rgba(88, 166, 255, 0.58);
+  border-radius: 999px;
+  background: rgba(19, 34, 56, 0.86);
+  color: var(--accent-soft);
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.app-content {
+  min-width: 0;
+}
+
+.sidebar-user-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(143, 179, 200, 0.16);
+}
+
+.sidebar-user-panel span {
+  color: var(--text-accent-muted);
+  font-size: 12px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-user-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(73, 142, 232, 0.96), rgba(89, 175, 255, 0.86));
+  color: #f8fbff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  flex: 0 0 auto;
+}
+
+.sidebar-footer-button,
+.sidebar-logout-button {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.sidebar-footer-button {
+  justify-content: center;
+}
+
+.sidebar-footer-short-label,
+.tab-short-label,
+.tab-icon {
+  display: none;
+}
+
+.tab-full-label,
+.sidebar-footer-full-label {
+  display: inline;
+}
+
+.login-theme-toggle {
+  justify-self: end;
+}
+
+.tabs-nav button {
+  gap: 10px;
+}
+
+.tab-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.tab-icon::before,
+.tab-icon::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.tab-icon-grid::before {
+  inset: 1px;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  box-shadow:
+    6px 0 0 -4.5px currentColor,
+    0 6px 0 -4.5px currentColor,
+    6px 6px 0 -4.5px currentColor;
+}
+
+.tab-icon-scan::before {
+  inset: 1px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+}
+
+.tab-icon-scan::after {
+  right: -1px;
+  bottom: -1px;
+  width: 6px;
+  height: 1.5px;
+  background: currentColor;
+  transform: rotate(45deg);
+  transform-origin: center;
+  border-radius: 999px;
+}
+
+.tab-icon-bookmark::before {
+  left: 3px;
+  top: 1px;
+  width: 10px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px 3px 2px 2px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 77%, 0 100%);
+}
+
+.tab-icon-shield::before {
+  left: 2px;
+  top: 1px;
+  width: 12px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 4px 4px 8px 8px;
+  clip-path: polygon(50% 0, 100% 18%, 86% 78%, 50% 100%, 14% 78%, 0 18%);
+}
+
+.tab-icon-arrows::before {
+  left: 2px;
+  top: 4px;
+  width: 12px;
+  height: 1.5px;
+  background: currentColor;
+  box-shadow: 0 6px 0 currentColor;
+}
+
+.tab-icon-arrows::after {
+  left: 2px;
+  top: 2px;
+  width: 12px;
+  height: 10px;
+  border-top: 1.5px solid transparent;
+  border-bottom: 1.5px solid transparent;
+  background:
+    linear-gradient(45deg, transparent 45%, currentColor 46%, currentColor 56%, transparent 57%) left top / 5px 5px no-repeat,
+    linear-gradient(-135deg, transparent 45%, currentColor 46%, currentColor 56%, transparent 57%) right top / 5px 5px no-repeat,
+    linear-gradient(-135deg, transparent 45%, currentColor 46%, currentColor 56%, transparent 57%) left bottom / 5px 5px no-repeat,
+    linear-gradient(45deg, transparent 45%, currentColor 46%, currentColor 56%, transparent 57%) right bottom / 5px 5px no-repeat;
+}
+
+.tab-icon-briefcase::before {
+  left: 1px;
+  top: 4px;
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+
+.tab-icon-briefcase::after {
+  left: 5px;
+  top: 1px;
+  width: 6px;
+  height: 4px;
+  border: 1.5px solid currentColor;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+
+.tab-icon-bell::before {
+  left: 3px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-icon-bell::after {
+  left: 5px;
+  bottom: 1px;
+  width: 6px;
+  height: 6px;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 2px 5px 0 -4px currentColor;
+}
+
+.tab-icon-gear::before {
+  inset: 2px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  box-shadow:
+    0 -6px 0 -4.5px currentColor,
+    0 6px 0 -4.5px currentColor,
+    6px 0 0 -4.5px currentColor,
+    -6px 0 0 -4.5px currentColor;
+}
+
+.tab-icon-flask::before {
+  left: 5px;
+  top: 1px;
+  width: 6px;
+  height: 4px;
+  border: 1.5px solid currentColor;
+  border-bottom: 0;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-icon-flask::after {
+  left: 3px;
+  top: 5px;
+  width: 10px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px 2px 4px 4px;
+  clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+}
+
+.tab-icon-book::before {
+  left: 2px;
+  top: 2px;
+  width: 11px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px 2px 2px 3px;
+}
+
+.tab-icon-book::after {
+  right: 1px;
+  top: 2px;
+  width: 7px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-left: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.tab-icon-check::before {
+  left: 3px;
+  top: 6px;
+  width: 5px;
+  height: 9px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.tab-icon-plug::before {
+  left: 4px;
+  top: 2px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+
+.tab-icon-plug::after {
+  left: 7px;
+  top: -1px;
+  width: 1.5px;
+  height: 5px;
+  background: currentColor;
+  box-shadow: 4px 0 0 currentColor, 0 11px 0 currentColor;
+}
+
+.tab-icon-crown::before {
+  left: 1px;
+  top: 4px;
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  clip-path: polygon(0 100%, 0 42%, 22% 60%, 34% 18%, 50% 52%, 66% 18%, 78% 60%, 100% 42%, 100% 100%);
+}
+
+.tab-icon-dot::before {
+  left: 5px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar {
+  padding-inline: 14px;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand {
+  gap: 12px;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand-lockup,
+.app-shell.sidebar-collapsed .sidebar-admin-card,
+.app-shell.sidebar-collapsed .sidebar-user-identity {
+  justify-content: center;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand-copy,
+.app-shell.sidebar-collapsed .sidebar-admin-copy,
+.app-shell.sidebar-collapsed .sidebar-user-identity span:last-child,
+.app-shell.sidebar-collapsed .tabs-section-label,
+.app-shell.sidebar-collapsed .tab-full-label,
+.app-shell.sidebar-collapsed .sidebar-footer-full-label {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .tabs-nav button {
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.app-shell.sidebar-collapsed .tab-icon,
+.app-shell.sidebar-collapsed .sidebar-footer-short-label {
+  display: inline;
+}
+
+.app-shell.sidebar-collapsed .tab-short-label {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .sidebar-admin-card {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 12px;
+}
+
+.app-shell.sidebar-collapsed .sidebar-user-panel {
+  justify-items: center;
+}
+
+.app-shell.sidebar-collapsed .sidebar-footer-button,
+.app-shell.sidebar-collapsed .sidebar-logout-button {
+  width: 100%;
+}
+
+@media (max-width: 1023px) {
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,131 @@
+.engine-panel {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 300px;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+
+.safety-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.automation-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.automation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.automation-grid div,
+.approval-list article {
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  background: var(--surface-0);
+}
+
+.automation-grid div {
+  min-height: 66px;
+  padding: 12px;
+}
+
+.automation-grid span,
+.approval-requests > span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.automation-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-white);
+}
+
+.active-strategy-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.active-strategy-panel > p {
+  max-width: 980px;
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.active-strategy-panel .strategy-sync-warning {
+  border: 1px solid rgba(244, 183, 64, 0.38);
+  border-radius: 10px;
+  background: rgba(244, 183, 64, 0.1);
+  color: #ffe1a3;
+  padding: 10px 12px;
+}
+
+.active-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.active-strategy-grid div,
+.strategy-formula-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid rgba(88, 166, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(11, 18, 29, 0.72);
+  padding: 12px;
+}
+
+.active-strategy-grid span,
+.strategy-formula-card span {
+  color: var(--text-accent-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.active-strategy-grid strong,
+.strategy-formula-card strong {
+  color: var(--color-white);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.active-strategy-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.active-strategy-rules span {
+  border: 1px solid rgba(76, 195, 138, 0.22);
+  border-radius: 999px;
+  background: rgba(76, 195, 138, 0.08);
+  color: #c7f6dc;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.strategy-formula-card p {
+  margin-bottom: 0;
+  color: #9fb2c4;
+  line-height: 1.45;
+}
