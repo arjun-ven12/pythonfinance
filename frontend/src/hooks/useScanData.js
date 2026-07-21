@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL, apiFetch as fetch } from "../services/apiClient";
+import { apiRequest, REQUEST_PRIORITY } from "../services/apiRequestManager";
 
 export default function useScanData() {
   const [data, setData] = useState(null);
@@ -58,9 +59,11 @@ export default function useScanData() {
 
   const fetchDataHealth = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/data-health`);
-      if (!response.ok) throw new Error("Unable to load data health");
-      setDataHealth(await response.json());
+      setDataHealth(await apiRequest(`${API_BASE_URL}/api/data-health`, {
+        cacheTtl: 10_000,
+        priority: REQUEST_PRIORITY.LOW,
+        staleTtl: 30_000,
+      }));
       setDataHealthError("");
     } catch (err) {
       setDataHealthError(err.message);
@@ -69,8 +72,11 @@ export default function useScanData() {
 
   const fetchSystemDataHealth = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/system/data-health`);
-      setSystemDataHealth(await response.json());
+      setSystemDataHealth(await apiRequest(`${API_BASE_URL}/api/system/data-health`, {
+        cacheTtl: 10_000,
+        priority: REQUEST_PRIORITY.LOW,
+        staleTtl: 30_000,
+      }));
     } catch (err) {
       setSystemDataHealth({
         prisma: "disconnected",

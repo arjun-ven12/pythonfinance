@@ -87,13 +87,15 @@ function shouldCreateApproval(order, mode) {
     return route === "REQUEST_APPROVAL" || route === "BLOCKED";
   }
 
-  return route === "BLOCKED";
+  return route === "READY_FOR_AUTO_EXECUTION" || route === "BLOCKED";
 }
 
 async function persistProposalsAndApprovals({
   userId,
   proposed = { orders: [] },
   activeStrategy = null,
+  scanId = null,
+  memoryIngestionService = null,
 }) {
   const orders = proposed.orders || [];
   const mode = ["MANUAL_APPROVAL", "SEMI_AUTOMATED", "FULL_AUTOMATION"].includes(
@@ -103,6 +105,7 @@ async function persistProposalsAndApprovals({
     : "MANUAL_APPROVAL";
   let proposalCount = 0;
   let approvalCount = 0;
+  const autoExecutionApprovalIds = [];
 
   for (const order of orders) {
     const symbol = String(order.symbol || "").trim().toUpperCase();
@@ -112,6 +115,9 @@ async function persistProposalsAndApprovals({
     if (!symbol || !quantity || quantity <= 0 || !entryPrice || entryPrice <= 0) {
       continue;
     }
+    const sourceOpportunity = scanId
+      ? await prisma.run((db) => db.opportunity.findFirst({ where: { userId, scanId, symbol }, orderBy: { opportunityScore: "desc" } }))
+      : null;
 
     const existing = await prisma.run((db) =>
       db.proposedTrade.findFirst({
@@ -142,6 +148,8 @@ async function persistProposalsAndApprovals({
         raw: {
           ...order,
           strategyVersionId: activeStrategy?.strategyVersionId || null,
+          opportunityId: sourceOpportunity?.id || null,
+          scanId,
           active_strategy_config: activeStrategy || null,
         },
       };
@@ -183,7 +191,7 @@ async function persistProposalsAndApprovals({
     );
 
     if (!activeApproval) {
-      await prisma.run((db) =>
+      const createdApproval = await prisma.run((db) =>
         db.$transaction(async (transaction) => {
           const request = await transaction.approvalRequest.create({
             data: {
@@ -207,7 +215,12 @@ async function persistProposalsAndApprovals({
               proposed_trade_id: proposal.id,
               source: "scan_persistence",
               strategyVersionId: activeStrategy?.strategyVersionId || null,
+              opportunityId: sourceOpportunity?.id || null,
+              scanId,
               active_strategy_config: activeStrategy || null,
+              auto_execute_eligible:
+                mode === "FULL_AUTOMATION" &&
+                order.execution_route?.route === "READY_FOR_AUTO_EXECUTION",
               order,
             },
             },
@@ -230,11 +243,15 @@ async function persistProposalsAndApprovals({
           return request;
         })
       );
+      if (memoryIngestionService) { const { approvalEvent } = require("../features/memory/services/memoryEvents"); await memoryIngestionService.recordEvent(approvalEvent(createdApproval, "APPROVAL_CREATED")); }
       approvalCount += 1;
+      if (createdApproval.raw?.auto_execute_eligible) {
+        autoExecutionApprovalIds.push(createdApproval.id);
+      }
     }
   }
 
-  return { proposalCount, approvalCount };
+  return { proposalCount, approvalCount, autoExecutionApprovalIds };
 }
 
 async function persistCompletedScan({
@@ -245,6 +262,7 @@ async function persistCompletedScan({
   startedAt = null,
   alerts = [],
   proposedOrders = { orders: [] },
+  memoryIngestionService = null,
 }) {
   const ownerId = requireUserId(userId);
   const started = startedAt ? new Date(startedAt) : new Date();
@@ -259,11 +277,13 @@ async function persistCompletedScan({
     scanId: scan.id,
     alerts,
   });
-  const { proposalCount, approvalCount } =
+  const { proposalCount, approvalCount, autoExecutionApprovalIds } =
     await persistProposalsAndApprovals({
       userId: ownerId,
       proposed: proposedOrders,
       activeStrategy,
+      scanId: scan.id,
+      memoryIngestionService,
     });
   const completedAt = new Date();
   const engineRun = await prisma.run((db) =>
@@ -309,6 +329,24 @@ async function persistCompletedScan({
     });
   });
 
+  if (memoryIngestionService) {
+    const { opportunityEvent, scanCompletedEvent } = require("../features/memory/services/memoryEvents");
+    const threshold = Math.min(100, Math.max(0, Number(process.env.MEMORY_SCANNER_MIN_SCORE) || 70));
+    const routedSymbols = new Set((proposedOrders.orders || []).map((order) => String(order.symbol || "").toUpperCase()));
+    const opportunities = await prisma.run((db) => db.opportunity.findMany({
+      where: { userId: ownerId, scanId: scan.id, OR: [{ opportunityScore: { gte: threshold } }, { symbol: { in: [...routedSymbols] } }] },
+      orderBy: { opportunityScore: "desc" },
+      take: 50,
+    }));
+    await memoryIngestionService.recordEvent(scanCompletedEvent({ ...scan, userId: ownerId }, { source, opportunityCount: scanResults.opportunities?.length || scanResults.results?.length || 0, alertCount, proposalCount, approvalCount, durationSeconds }));
+    for (const opportunity of opportunities) {
+      await memoryIngestionService.recordEvent(opportunityEvent(opportunity));
+      if (routedSymbols.has(String(opportunity.symbol).toUpperCase())) {
+        await memoryIngestionService.recordEvent(opportunityEvent(opportunity, "OPPORTUNITY_ROUTED", { reason: "Scanner proposal entered the approval or execution routing flow." }));
+      }
+    }
+  }
+
   return {
     dataSource: "PRISMA",
     degradedMode: false,
@@ -317,6 +355,7 @@ async function persistCompletedScan({
     alertCount,
     proposalCount,
     approvalCount,
+    autoExecutionApprovalIds,
   };
 }
 
@@ -325,4 +364,5 @@ module.exports = {
     alertDeliveryService.processDueDeliveries(userId),
   persistCompletedScan,
   persistProposalsAndApprovals,
+  shouldCreateApproval,
 };

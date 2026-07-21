@@ -25,6 +25,7 @@ const {
   notFoundMiddleware,
 } = require("./middleware/errorMiddleware");
 const requestLogger = require("./middleware/requestLogger");
+const { aiRequestContextMiddleware } = require("./services/aiRequestContext");
 const dataSourceHeaders = require("./middleware/dataSourceHeaders");
 const { createCsrfProtectionMiddleware } = require("./middleware/csrfMiddleware");
 const {
@@ -70,7 +71,29 @@ const createMarketDataService = require("./features/marketData/services/marketDa
 const createMarketDataHubService = require("./features/marketData/services/marketDataHub.service");
 const createPaperExecutionRouter = require("./features/paperExecution/routes/paperExecution.routes");
 const createPaperExecutionService = require("./features/paperExecution/services/paperExecution.service");
+const createAutonomousPaperTradingService = require("./features/automation/services/autonomousPaperTrading.service");
 const createPortfolioRouter = require("./features/portfolio/routes/portfolio.routes");
+const createResearchRouter = require("./features/research/routes/research.routes");
+const { createResearchContextService } = require("./features/research/services/researchContext.service");
+const { createResearchCopilotService } = require("./features/research/services/researchCopilot.service");
+const { createResearchWorkspaceService } = require("./features/research/services/researchWorkspace.service");
+let autonomousPaperTradingService = null;
+
+const {
+  createPortfolioCopilotContextService,
+} = require("./features/portfolio/services/portfolioCopilotContext.service");
+const {
+  createPortfolioCopilotService,
+} = require("./features/portfolio/services/portfolioCopilot.service");
+const {
+  createPortfolioScenarioService,
+} = require("./features/portfolio/services/portfolioScenario.service");
+const {
+  createPortfolioAdvisorService,
+} = require("./features/portfolio/services/portfolioAdvisor.service");
+const {
+  createPortfolioProposalService,
+} = require("./features/portfolio/services/portfolioProposal.service");
 const createPlaybookRouter = require("./features/playbook/routes/playbook.routes");
 const createPlaybookSourceService = require("./features/playbook/services/playbookSource.service");
 const createPreTradeRouter = require("./features/preTrade/routes/preTrade.routes");
@@ -79,6 +102,18 @@ const createSettingsRouter = require("./features/settings/routes/settings.routes
 const createStockUniversesRouter = require("./features/stockUniverses/routes/stockUniverses.routes");
 const createStrategyLabRouter = require("./features/strategyLab/routes/strategyLab.routes");
 const createStrategyLabService = require("./features/strategyLab/services/strategyLab.service");
+const {
+  createStrategyDraftService,
+} = require("./features/strategyLab/services/strategyDraft.service");
+const {
+  createStrategyCopilotService,
+} = require("./features/strategyLab/services/strategyCopilot.service");
+const {
+  createStrategyResearchService,
+} = require("./features/strategyLab/services/strategyResearch.service");
+const {
+  validateStrategyDsl,
+} = require("./features/strategyLab/services/strategyDslValidator");
 const {
   createStrategyStorageService,
 } = require("./features/strategyLab/services/strategyStorage.service");
@@ -98,6 +133,26 @@ const {
 const {
   createStrategyAllocationService,
 } = require("./features/strategyLab/services/strategyAllocationService");
+const { createMatrixCopilotService } = require("./features/strategyLab/services/matrixCopilot.service");
+const { createMatrixScenarioService } = require("./features/strategyLab/services/matrixScenario.service");
+const { createMatrixAdvisorService } = require("./features/strategyLab/services/matrixAdvisor.service");
+const { createMatrixProposalService } = require("./features/strategyLab/services/matrixProposal.service");
+const { createMemoryIngestionService } = require("./features/memory/services/memoryIngestion.service");
+const { createMemoryQueryService } = require("./features/memory/services/memoryQuery.service");
+const { buildMemoryEmbeddingConfig } = require("./features/memory/config/memoryEmbedding.config");
+const { createEmbeddingProvider } = require("./features/memory/services/embeddingProvider.service");
+const { createMemoryVectorRepository } = require("./features/memory/repositories/memoryVector.repository");
+const { createMemoryEmbeddingService } = require("./features/memory/services/memoryEmbedding.service");
+const { createMemoryEmbeddingBackfillService } = require("./features/memory/services/memoryEmbeddingBackfill.service");
+const { buildMemoryRetrievalConfig } = require("./features/memory/config/memoryRetrieval.config");
+const { createMemoryRetrievalRepository } = require("./features/memory/repositories/memoryRetrieval.repository");
+const { createMemoryHybridRanker } = require("./features/memory/services/memoryHybridRanker");
+const { createMemoryContextService } = require("./features/memory/services/memoryContext.service");
+const { createMemoryRetrievalAuditService } = require("./features/memory/services/memoryRetrievalAudit.service");
+const { createMemoryRetrievalService } = require("./features/memory/services/memoryRetrieval.service");
+const { buildMemoryPersonalizationConfig } = require("./features/memory/config/memoryPersonalization.config");
+const { createMemoryPersonalizationService } = require("./features/memory/services/memoryPersonalization.service");
+const { createMemoryRouter } = require("./features/memory/routes/memory.routes");
 const createSystemRouter = require("./features/system/routes/system.routes");
 const createRuntimeDiagnosticsService = require("./features/system/services/runtimeDiagnostics.service");
 const createTradesService = require("./features/trades/services/trades.service");
@@ -122,8 +177,14 @@ const {
   encryptionDiagnostics,
   validateEncryptionConfiguration,
 } = require("./services/encryptionService");
-const { createAiRateLimiter } = require("./middleware/aiRateLimit");
+const {
+  createAiRateLimiter,
+  createInternalAiRateLimiter,
+} = require("./middleware/aiRateLimit");
 const { createAIService } = require("./services/ai/AIService");
+const { createAiInvocationStore } = require("./features/ai/services/ai.invocationStore");
+const { createAiObservabilityRepository } = require("./features/ai/services/ai.observabilityRepository");
+const { createAiObservabilityService } = require("./features/ai/services/ai.observabilityService");
 const {
   withJsonFallback,
   withPrismaSource,
@@ -167,6 +228,7 @@ const {
   recordManualTrade,
   rebuildCaches,
   rebuildPortfolioFromLedger,
+  setMemoryIngestionService,
   syncLedgerFromBrokerAccount,
   verifyUserLedger,
 } = require("./services/portfolioLedgerService");
@@ -209,6 +271,7 @@ if (process.env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
 }
 app.use(requestLogger);
+app.use(aiRequestContextMiddleware);
 app.use(createHelmetMiddleware());
 app.use(browserSecurityHeaders);
 app.post(
@@ -247,9 +310,111 @@ const ibkrBrokerActionPath = path.join(pythonEngineDir, "ibkr_broker_action.py")
 const schedulerControllers = new Map();
 const scanJobService = createScanJobService({ prisma });
 const adminService = createAdminService({ prisma });
-const aiService = createAIService();
+const aiInvocationStore = createAiInvocationStore({ prisma });
+const aiService = createAIService({ invocationStore: aiInvocationStore });
+const aiObservabilityRepository = createAiObservabilityRepository({ prisma });
+const aiObservabilityService = createAiObservabilityService({ repository: aiObservabilityRepository });
+const memoryIngestionService = createMemoryIngestionService({ prisma });
+setMemoryIngestionService(memoryIngestionService);
+const memoryEmbeddingConfig = buildMemoryEmbeddingConfig();
+const embeddingProvider = createEmbeddingProvider({
+  config: memoryEmbeddingConfig,
+  invocationStore: aiInvocationStore,
+});
+const memoryVectorRepository = createMemoryVectorRepository({
+  prisma,
+  dimensions: memoryEmbeddingConfig.dimensions,
+});
+const memoryEmbeddingService = createMemoryEmbeddingService({
+  prisma,
+  config: memoryEmbeddingConfig,
+  provider: embeddingProvider,
+  vectorRepository: memoryVectorRepository,
+});
+const memoryEmbeddingBackfillService = createMemoryEmbeddingBackfillService({
+  prisma,
+  embeddingService: memoryEmbeddingService,
+  config: memoryEmbeddingConfig,
+});
+const memoryRetrievalConfig = buildMemoryRetrievalConfig();
+const memoryRetrievalRepository = createMemoryRetrievalRepository({ prisma });
+const memoryRetrievalAuditService = createMemoryRetrievalAuditService({ prisma });
+const memoryContextService = createMemoryContextService();
+const memoryPersonalizationService = createMemoryPersonalizationService({
+  prisma,
+  config: buildMemoryPersonalizationConfig(),
+  embeddingService: memoryEmbeddingService,
+});
+const memoryRetrievalService = createMemoryRetrievalService({
+  repository: memoryRetrievalRepository,
+  vectorRepository: memoryVectorRepository,
+  embeddingProvider,
+  ranker: createMemoryHybridRanker({ config: memoryRetrievalConfig }),
+  contextService: memoryContextService,
+  auditService: memoryRetrievalAuditService,
+  config: memoryRetrievalConfig,
+  embeddingIdentity: {
+    provider: memoryEmbeddingConfig.provider,
+    model: memoryEmbeddingConfig.model,
+    version: memoryEmbeddingConfig.embeddingVersion,
+    dimensions: memoryEmbeddingConfig.dimensions,
+  },
+});
+memoryContextService.setRetrievalService(memoryRetrievalService);
+memoryContextService.setPersonalizationService(memoryPersonalizationService);
+aiService.setMemoryContextService(memoryContextService);
+memoryIngestionService.setEmbeddingService(memoryEmbeddingService);
+const memoryQueryService = createMemoryQueryService({
+  prisma,
+  ingestionService: memoryIngestionService,
+  embeddingService: memoryEmbeddingService,
+});
 const aiRateLimiter = createAiRateLimiter();
+const internalAiRateLimiter = createInternalAiRateLimiter({
+  limit: Math.max(
+    1,
+    Number.parseInt(process.env.AI_INTERNAL_GATEWAY_RATE_LIMIT_PER_MINUTE || "300", 10) || 300
+  ),
+});
 const strategyStorage = createStrategyStorageService();
+
+function getInternalAiGatewayToken() {
+  if (process.env.AI_INTERNAL_GATEWAY_TOKEN) {
+    return process.env.AI_INTERNAL_GATEWAY_TOKEN;
+  }
+  if (["production", "prod"].includes(String(process.env.NODE_ENV || "").toLowerCase())) {
+    return "";
+  }
+  return process.env.JWT_SECRET || "";
+}
+
+function assertAiGatewayTokenPolicy() {
+  if (
+    ["production", "prod"].includes(String(process.env.NODE_ENV || "").toLowerCase()) &&
+    !process.env.AI_INTERNAL_GATEWAY_TOKEN
+  ) {
+    throw new Error(
+      "AI_INTERNAL_GATEWAY_TOKEN is required in production; JWT_SECRET fallback is disabled."
+    );
+  }
+}
+
+function getPythonAiGatewayEnv(userId) {
+  const token = getInternalAiGatewayToken();
+  if (!token) {
+    return {};
+  }
+
+  return {
+    NODE_AI_GATEWAY_URL:
+      process.env.NODE_AI_GATEWAY_URL ||
+      `http://127.0.0.1:${PORT}/internal/ai/news-reasoning`,
+    NODE_AI_GATEWAY_TOKEN: token,
+    NODE_AI_USER_ID: userId,
+  };
+}
+
+assertAiGatewayTokenPolicy();
 
 function toNumber(value, fallback = 0) {
   const parsed = Number.parseFloat(value);
@@ -931,11 +1096,12 @@ const {
   prisma,
   pythonEngineDir,
   spawn,
+  memoryIngestionService,
 });
 const brokerConnectionLogRepository = createBrokerConnectionLogRepository({ prisma });
 const brokerConfigService = createBrokerConfigService({ prisma });
 const brokerSecretService = createBrokerSecretService({ prisma });
-const brokerOrdersRepository = createBrokerOrdersRepository({ prisma });
+const brokerOrdersRepository = createBrokerOrdersRepository({ prisma, memoryIngestionService });
 const brokerExecutionAuditRepository = createBrokerExecutionAuditRepository({ prisma });
 const ibkrAdapter = createIbkrAdapter({
   buildIbkrConfig,
@@ -1047,6 +1213,7 @@ const {
   prisma,
   requireUserId,
   validateSymbol,
+  memoryIngestionService,
 });
 
 const {
@@ -1098,6 +1265,7 @@ const {
   parseSafetyPercent,
   readActiveStrategyConfig,
   readEngineStatus,
+  recoverSchedulers,
   readUserSafetyStatus,
   startScanJobForUser,
   startScheduler,
@@ -1112,6 +1280,7 @@ const {
   getMarketUniverseSettingsFromRequest,
   getPlaybookSourceData,
   getPortfolioForUser,
+  getPythonAiGatewayEnv,
   getPythonPath,
   getRequestedScanSymbols,
   getRiskMultiplier,
@@ -1119,7 +1288,11 @@ const {
   getTradingHorizon,
   normalizeScanMetadata,
   parseScanArtifacts,
-  persistCompletedScan,
+  persistCompletedScan: (args) => persistCompletedScan({ ...args, memoryIngestionService }),
+  processAutonomousPaperTrades: (args) =>
+    autonomousPaperTradingService
+      ? autonomousPaperTradingService.processEligibleApprovals(args)
+      : Promise.resolve(null),
   prisma,
   pythonEngineDir,
   readUserSetting,
@@ -1181,6 +1354,7 @@ brokerService = createBrokerService({
 const {
   buildExperimentBacktestConfig,
   buildStrategyComparisonMetrics,
+  buildStrategyExperimentSettings,
   buildStrategyExperimentCreateData,
   buildStrategyExperimentUpdateData,
   buildStrategyRunData,
@@ -1215,6 +1389,29 @@ const {
   strategyStorage,
   validateSymbol,
 });
+const { generateStrategyDraft } = createStrategyDraftService({
+  aiService,
+  buildStrategyExperimentSettings,
+  validateStrategyDsl,
+});
+const {
+  answerStrategyQuestion,
+  compareStrategies: compareStrategiesCopilot,
+  explainStrategy,
+  proposeStrategyEdit,
+  reviewStrategy,
+} = createStrategyCopilotService({
+  aiService,
+  buildStrategyExperimentSettings,
+  validateStrategyDsl,
+});
+const {
+  answerResearchQuestion,
+  compareVersions: compareStrategyVersions,
+  generateResearchReport,
+} = createStrategyResearchService({
+  aiService,
+});
 
 const {
   getDeploymentAllocationDashboard,
@@ -1227,6 +1424,10 @@ const {
   strategyStorage,
   writeActiveStrategyConfig,
 });
+const matrixCopilotService = createMatrixCopilotService({ prisma, aiService, getDeploymentAllocationDashboard, memoryIngestionService });
+const matrixScenarioService = createMatrixScenarioService({ runMatrixReplay });
+const matrixAdvisorService = createMatrixAdvisorService({ aiService, matrixCopilotService, scenarioService: matrixScenarioService });
+const matrixProposalService = createMatrixProposalService({ prisma, matrixAdvisorService, scenarioService: matrixScenarioService, matrixCopilotService, updateDeploymentAllocation, memoryIngestionService });
 
 const {
   persistPaperExecutionResult,
@@ -1237,6 +1438,7 @@ const {
   ensureLedgerInitialized,
   getPortfolioForUser,
   getProcessFailureMessage,
+  getPythonAiGatewayEnv,
   getPythonPath,
   parseJsonOutput,
   paperExecutionPath,
@@ -1245,6 +1447,7 @@ const {
   rebuildCaches,
   requireUserId,
   spawn,
+  memoryIngestionService,
 });
 
 const {
@@ -1266,6 +1469,17 @@ const {
   requireUserId,
   spawn,
   validateSymbol,
+});
+
+autonomousPaperTradingService = createAutonomousPaperTradingService({
+  getDefaultExecutionSettings,
+  getRequestOrderPayload,
+  persistPaperExecutionResult,
+  prisma,
+  readUserSetting,
+  runPaperOrder,
+  runPreTradeAnalysis,
+  transitionApprovalRequest,
 });
 
 const brokerPaperExecutionService = createBrokerPaperExecutionService({
@@ -1292,6 +1506,43 @@ const tradingSessionService = createTradingSessionService({
   tradeRepository,
 });
 
+const portfolioCopilotContextService = createPortfolioCopilotContextService({
+  tradingSessionService,
+  buildRiskDashboardFromDatabase,
+  getPortfolioForUser,
+  listApprovalRequests,
+  prisma,
+});
+const portfolioCopilotService = createPortfolioCopilotService({
+  aiService,
+  contextService: portfolioCopilotContextService,
+});
+const portfolioScenarioService = createPortfolioScenarioService({ getQuote, simulateStrategyPortfolio });
+const portfolioAdvisorService = createPortfolioAdvisorService({
+  aiService,
+  contextService: portfolioCopilotContextService,
+  scenarioService: portfolioScenarioService,
+});
+const portfolioProposalService = createPortfolioProposalService({
+  prisma,
+  contextService: portfolioCopilotContextService,
+  scenarioService: portfolioScenarioService,
+  memoryIngestionService,
+});
+const researchContextService = createResearchContextService({
+  getQuotes,
+  readScanResultsWithHistory,
+  buildDataHealth,
+  watchlistRepository,
+  portfolioContextService: portfolioCopilotContextService,
+  prisma,
+});
+const researchCopilotService = createResearchCopilotService({
+  aiService,
+  contextService: researchContextService,
+});
+const researchWorkspaceService = createResearchWorkspaceService({ prisma, aiService, contextService: researchContextService, memoryIngestionService });
+
 const {
   buildTrade,
 } = createTradesService();
@@ -1300,6 +1551,42 @@ app.get("/", (req, res) => {
   res.json({ message: "Trading dashboard backend running" });
 });
 
+function verifyInternalAiToken(req, res, next) {
+  const expectedToken = getInternalAiGatewayToken();
+  const providedToken = req.headers["x-internal-ai-token"];
+
+  if (!expectedToken || providedToken !== expectedToken) {
+    res.status(401).json({ error: "Invalid internal AI token." });
+    return;
+  }
+
+  const userId = String(req.body?.userId || req.headers["x-ai-user-id"] || "").trim();
+  if (!userId) {
+    res.status(400).json({ error: "Internal AI request requires userId." });
+    return;
+  }
+
+  req.user = { id: userId };
+  next();
+}
+
+app.post(
+  "/internal/ai/news-reasoning",
+  verifyInternalAiToken,
+  internalAiRateLimiter,
+  async (req, res) => {
+    try {
+      const { userId: _userId, ...payload } = req.body || {};
+      res.json(await aiService.reasonAboutNews(req.user.id, payload));
+    } catch (error) {
+      res.status(error.statusCode || error.status || 500).json({
+        error: error.message,
+        details: error.details || null,
+      });
+    }
+  }
+);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/demo", requireDemoAccess, blockDemoMutation, createDemoRouter());
 
@@ -1307,6 +1594,14 @@ app.use("/api/demo", requireDemoAccess, blockDemoMutation, createDemoRouter());
 // Every API route mounted below this line requires a valid JWT.
 app.use("/api", authMiddleware);
 app.use("/api", requireVerifiedUser);
+app.use("/api", createMemoryRouter({
+  queryService: memoryQueryService,
+  embeddingService: memoryEmbeddingService,
+  embeddingBackfillService: memoryEmbeddingBackfillService,
+  retrievalService: memoryRetrievalService,
+  personalizationService: memoryPersonalizationService,
+  requireAdmin: requireRole(USER_ROLES.LEVEL_3_OWNER_ADMIN),
+}));
 
 app.get(
   "/api/security/diagnostics",
@@ -1400,6 +1695,7 @@ app.use("/api", requirePageAccess(PAGE_KEYS.APPROVALS), createProposedTradesRout
   updateProposedTrade,
 }));
 app.use("/api", requirePageAccess(PAGE_KEYS.PORTFOLIO), createPortfolioRouter({
+  aiRateLimiter,
   buildPortfolioConstruction,
   buildRiskDashboardFromDatabase,
   getPortfolioForUser,
@@ -1411,6 +1707,14 @@ app.use("/api", requirePageAccess(PAGE_KEYS.PORTFOLIO), createPortfolioRouter({
   withJsonFallback,
   verifyUserLedger,
   withPrismaSource,
+  portfolioCopilotService,
+  portfolioAdvisorService,
+  portfolioProposalService,
+}));
+app.use("/api", requirePageAccess(PAGE_KEYS.RESEARCH), createResearchRouter({
+  aiRateLimiter,
+  researchCopilotService,
+  researchWorkspaceService,
 }));
 app.use("/api", createTradingRouter({
   tradingSessionService,
@@ -1487,6 +1791,8 @@ app.use("/api", createMarketDataRouter({
 app.use("/api", createAiRouter({
   aiService,
   aiRateLimiter,
+  requireAdmin: requireRole(USER_ROLES.LEVEL_3_OWNER_ADMIN),
+  observabilityService: aiObservabilityService,
 }));
 app.use("/api", requirePageAccess(PAGE_KEYS.TRADES), createTradesRouter({
   buildTrade,
@@ -1520,6 +1826,7 @@ app.use("/api", createEngineRouter({
   writeUserSetting,
 }));
 app.use("/api", requirePageAccess(PAGE_KEYS.PLAYBOOK), createPlaybookRouter({
+  aiRateLimiter,
   compareVersions,
   convertRecommendationToDraft,
   createPlaybook,
@@ -1539,6 +1846,8 @@ app.use("/api", requirePageAccess(PAGE_KEYS.PLAYBOOK), createPlaybookRouter({
 }));
 app.use("/api", requirePageAccess(PAGE_KEYS.STRATEGY_LAB), createStrategyLabRouter({
   activateStrategyVersion,
+  answerStrategyQuestion,
+  answerResearchQuestion,
   assignStrategyToActiveSet,
   buildExperimentBacktestConfig,
   buildStrategyComparisonMetrics,
@@ -1546,19 +1855,25 @@ app.use("/api", requirePageAccess(PAGE_KEYS.STRATEGY_LAB), createStrategyLabRout
   buildStrategyExperimentCreateData,
   buildStrategyExperimentUpdateData,
   buildStrategyRunData,
+  compareStrategiesCopilot,
+  compareStrategyVersions,
   computeLifecycleReadiness,
   computeDeploymentReadiness,
   createStrategyVersion,
   deactivateStrategyDeployment,
+  explainStrategy,
+  generateResearchReport,
   getActiveSetState,
   getStrategyLifecycleDashboard,
   getStrategyLifecycleEvidence,
   getStrategyValidationAggregate,
+  generateStrategyDraft,
   getStrategyLeaderboard,
   getStrategyMemory,
   getStrategyExperimentId,
   persistMarketRegimeSnapshots,
   persistStrategyRunTrades,
+  proposeStrategyEdit,
   prisma,
   readActiveStrategyConfig,
   resolveCanonicalDeploymentState,
@@ -1574,12 +1889,17 @@ app.use("/api", requirePageAccess(PAGE_KEYS.STRATEGY_LAB), createStrategyLabRout
   runWalkForward,
   sanitizeBacktestConfig,
   getDeploymentAllocationDashboard,
+  reviewStrategy,
   simulateStrategyPortfolio,
   statusFromReadiness,
   strategyStorage,
   removeStrategyFromActiveSet,
   updateDeploymentAllocation,
   writeActiveStrategyConfig,
+  matrixCopilotService,
+  matrixAdvisorService,
+  matrixProposalService,
+  memoryIngestionService,
 }));
 app.use("/api", requirePageAccess(PAGE_KEYS.APPROVALS), createPaperExecutionRouter({
   getApprovalRequestById,
@@ -1607,8 +1927,23 @@ app.use(errorMiddleware);
 scanJobService.recoverInterruptedJobs().catch((error) => {
   console.error(`Unable to reconcile interrupted scan jobs: ${error.message}`);
 });
+recoverSchedulers().catch((error) => {
+  console.error(`Unable to recover persisted engine schedulers: ${error.message}`);
+});
 
 startMarketDataService();
+
+memoryEmbeddingService.diagnostics()
+  .then((diagnostics) => {
+    if (!diagnostics.storage.extension.available) {
+      console.warn("Memory embeddings are unavailable because pgvector is not installed.");
+      return;
+    }
+    if (memoryEmbeddingConfig.enabled) memoryEmbeddingService.start();
+  })
+  .catch((error) => {
+    console.warn(`Memory embedding diagnostics failed: ${error.message}`);
+  });
 
 const httpServer = app.listen(PORT, (error) => {
   if (error) {
@@ -1658,6 +1993,7 @@ function shutdown(signal) {
   void scanJobService.shutdown();
   void marketDataHub.stop();
   void stopMarketDataService();
+  memoryEmbeddingService.stop();
 
   httpServer.close(() => {
     process.exit(0);

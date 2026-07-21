@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useEngineStatus from "../../../hooks/useEngineStatus";
 import { API_BASE_URL, apiFetch as fetch } from "../../../services/apiClient";
+import { apiRequest, REQUEST_PRIORITY } from "../../../services/apiRequestManager";
 
 function dashboardPercentToDecimal(value) {
   const number = Number(value);
@@ -260,9 +261,11 @@ export default function useSettings({
 
   const fetchSafetyStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/safety-status`);
-      if (!response.ok) throw new Error("Unable to load safety status");
-      setSafetyStatus(await response.json());
+      setSafetyStatus(await apiRequest(`${API_BASE_URL}/api/safety-status`, {
+        cacheTtl: 5_000,
+        priority: REQUEST_PRIORITY.LOW,
+        staleTtl: 20_000,
+      }));
       setSafetyError("");
     } catch (err) {
       setSafetyError(err.message);

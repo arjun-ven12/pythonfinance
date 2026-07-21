@@ -1,6 +1,15 @@
 const { ownedWhere, requireUserId } = require("../../../repositories/ownership");
 
-function createBrokerOrdersRepository({ prisma }) {
+function createBrokerOrdersRepository({ prisma, memoryIngestionService = null }) {
+  function recordAfterCommit(buildEvent, record) {
+    if (!memoryIngestionService) return;
+    const timer = setTimeout(async () => {
+      let result = await memoryIngestionService.recordEvent(buildEvent(record));
+      if (result?.error) result = await new Promise((resolve) => { const retry = setTimeout(() => resolve(memoryIngestionService.recordEvent(buildEvent(record))), 100); retry.unref?.(); });
+      return result;
+    }, 0);
+    timer.unref?.();
+  }
   function normalizeBrokerFilter(broker) {
     const normalized = String(broker || "").trim().toUpperCase();
     return normalized || null;
@@ -131,9 +140,11 @@ function createBrokerOrdersRepository({ prisma }) {
   }
 
   async function createSubmittedOrder(transaction, payload) {
-    return transaction.brokerOrder.create({
+    const order = await transaction.brokerOrder.create({
       data: payload,
     });
+    if (memoryIngestionService) { const { brokerOrderEvent } = require("../../memory/services/memoryEvents"); recordAfterCommit(brokerOrderEvent, order); }
+    return order;
   }
 
   async function appendEvent(transaction, userId, brokerOrderId, eventType, payload = null) {
@@ -150,6 +161,10 @@ function createBrokerOrdersRepository({ prisma }) {
 
   async function updateOrder(transaction, userId, id, data) {
     const ownerId = requireUserId(userId);
+    const previous = await transaction.brokerOrder.findFirst({
+      where: { id, userId: ownerId },
+      select: { status: true, filledQuantity: true },
+    });
     const result = await transaction.brokerOrder.updateMany({
       where: {
         id,
@@ -162,19 +177,26 @@ function createBrokerOrdersRepository({ prisma }) {
       error.statusCode = 404;
       throw error;
     }
-    return transaction.brokerOrder.findFirst({
+    const updated = await transaction.brokerOrder.findFirst({
       where: { id, userId: ownerId },
       include: {
         fills: true,
         events: { orderBy: { createdAt: "desc" } },
       },
     });
+    const statusChanged = previous && String(previous.status) !== String(updated?.status);
+    const fillChanged = previous && Number(previous.filledQuantity || 0) !== Number(updated?.filledQuantity || 0);
+    if (memoryIngestionService && updated && (statusChanged || fillChanged)) {
+      const { brokerOrderTransitionEvent } = require("../../memory/services/memoryEvents");
+      recordAfterCommit((record) => brokerOrderTransitionEvent(record, previous.status), updated);
+    }
+    return updated;
   }
 
   async function upsertFill(transaction, userId, payload) {
     const ownerId = requireUserId(userId);
     if (payload.executionId) {
-      return transaction.brokerFill.upsert({
+      const fill = await transaction.brokerFill.upsert({
         where: {
           userId_executionId: {
             userId: ownerId,
@@ -193,14 +215,18 @@ function createBrokerOrdersRepository({ prisma }) {
           userId: ownerId,
         },
       });
+      if (memoryIngestionService) { const { brokerFillEvent } = require("../../memory/services/memoryEvents"); recordAfterCommit(brokerFillEvent, fill); }
+      return fill;
     }
 
-    return transaction.brokerFill.create({
+    const fill = await transaction.brokerFill.create({
       data: {
         ...payload,
         userId: ownerId,
       },
     });
+    if (memoryIngestionService) { const { brokerFillEvent } = require("../../memory/services/memoryEvents"); recordAfterCommit(brokerFillEvent, fill); }
+    return fill;
   }
 
   return {

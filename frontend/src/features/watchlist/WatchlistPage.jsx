@@ -6,8 +6,9 @@ import useWatchlistQuotes from "./hooks/useWatchlistQuotes";
 
 export default function WatchlistFeaturePage({
   formatPercent,
+  isScanning,
+  onScanWatchlist,
   scanWatchlistOnly,
-  setDetailSymbol,
   setScanWatchlistOnly,
   setSelectedSymbol,
   toggleWatchlist,
@@ -73,6 +74,12 @@ export default function WatchlistFeaturePage({
     handleSelectSymbol(symbol, item);
   };
 
+  const handleScanWatchlist = () => {
+    if (isScanning || watchlistSymbols.length === 0) return;
+    setScanWatchlistOnly(true);
+    onScanWatchlist?.();
+  };
+
   const filteredScannedItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const base =
@@ -136,11 +143,13 @@ export default function WatchlistFeaturePage({
         </div>
 
         <button
-          className={`watchlist-scan-toggle ${scanWatchlistOnly ? "active" : ""}`}
-          onClick={() => setScanWatchlistOnly((current) => !current)}
+          aria-busy={isScanning}
+          className={`watchlist-scan-toggle ${scanWatchlistOnly || isScanning ? "active" : ""}`}
+          disabled={isScanning || watchlistSymbols.length === 0}
+          onClick={handleScanWatchlist}
           type="button"
         >
-          Scan watchlist only
+          {isScanning ? "Scanning watchlist..." : "Scan watchlist only"}
         </button>
 
         <label className="watchlist-search">

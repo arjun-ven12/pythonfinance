@@ -21,11 +21,17 @@ function toNumber(value, fallback) {
 
 function normalizeIndicator(raw = "") {
   const value = String(raw).trim().toUpperCase();
+  const periodMatch = value.match(/EMA\D*(\d+)/);
+  const period = periodMatch ? Number(periodMatch[1]) : null;
   if (!value) {
     throw new Error("Rule indicator is required.");
   }
-  if (value.includes("EMA") && (value.includes("FAST") || value.includes("20"))) return "EMA_FAST";
-  if (value.includes("EMA") && (value.includes("SLOW") || value.includes("50") || value.includes("100") || value.includes("200"))) return "EMA_SLOW";
+  if (value.includes("EMA") && (value.includes("FAST") || (Number.isFinite(period) && period < 50))) {
+    return "EMA_FAST";
+  }
+  if (value.includes("EMA") && (value.includes("SLOW") || (Number.isFinite(period) && period >= 50))) {
+    return "EMA_SLOW";
+  }
   if (value.includes("RSI")) return "RSI";
   if (value.includes("MACD")) return "MACD";
   if (value.includes("ATR")) return "ATR";

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL, apiFetch, readJson } from "../../services/apiClient";
 import { PAGE_KEYS, USER_ROLES } from "../auth/accessControl";
+import AiCostDashboard from "./AiCostDashboard";
 import "./admin.css";
 
 const PAGE_LABELS = {
@@ -282,6 +283,8 @@ export default function AdminDashboardPage({ currentUser }) {
 
       {error ? <div className="admin-dashboard__banner error">{error}</div> : null}
       {statusMessage ? <div className="admin-dashboard__banner success">{statusMessage}</div> : null}
+
+      <AiCostDashboard />
 
       <div className="admin-dashboard__layout">
         <section className="admin-dashboard__panel">

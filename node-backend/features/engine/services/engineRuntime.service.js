@@ -9,6 +9,7 @@ function createEngineRuntimeService({
   getMarketUniverseSettingsFromRequest,
   getPlaybookSourceData,
   getPortfolioForUser,
+  getPythonAiGatewayEnv = () => ({}),
   getPythonPath,
   getRequestedScanSymbols,
   getRiskMultiplier,
@@ -17,6 +18,7 @@ function createEngineRuntimeService({
   normalizeScanMetadata,
   parseScanArtifacts,
   persistCompletedScan,
+  processAutonomousPaperTrades = async () => null,
   prisma,
   pythonEngineDir,
   readUserSetting,
@@ -554,6 +556,10 @@ async function startScanJobForUser(userId, body = {}, type = "MANUAL") {
     command: getPythonPath(),
     args: scannerArgs,
     cwd: pythonEngineDir,
+    env: {
+      ...process.env,
+      ...getPythonAiGatewayEnv(userId),
+    },
     timeoutMs:
       type === "SCHEDULED"
         ? Number(process.env.SCHEDULED_SCAN_TIMEOUT_MS) || 10 * 60 * 1000
@@ -598,6 +604,9 @@ async function startScanJobForUser(userId, body = {}, type = "MANUAL") {
         alerts: scannerArtifacts.alerts || [],
         proposedOrders: scannerArtifacts.proposed_orders || { orders: [] },
       });
+      const autonomousExecution = await processAutonomousPaperTrades({
+        userId,
+      });
 
       try {
         await syncPlaybook(userId, await getPlaybookSourceData(userId));
@@ -612,6 +621,7 @@ async function startScanJobForUser(userId, body = {}, type = "MANUAL") {
         scanSummary: scanResults.scan_summary || null,
         generatedAt: scanResults.generated_at,
         dataSource: "PRISMA",
+        autonomousExecution,
       };
     },
   });
@@ -689,11 +699,22 @@ async function startScheduler({
     "30min": 30 * 60 * 1000,
     "1h": 60 * 60 * 1000,
   }[interval];
+  if (!intervalMilliseconds) {
+    throw new Error("Scheduler interval must be one of 5min, 15min, 30min, or 1h.");
+  }
   const controller = {
     stopped: false,
     timer: null,
   };
   schedulerControllers.set(userId, controller);
+  const schedulerConfig = {
+    interval,
+    limit,
+    riskMultiplier,
+    marketHoursOnly,
+    horizon: tradingHorizon,
+    symbols,
+  };
 
   const scheduleNext = async () => {
     if (controller.stopped) return;
@@ -704,6 +725,7 @@ async function startScheduler({
       interval,
       horizon: tradingHorizon,
       market_hours_only: marketHoursOnly,
+      scheduler_config: schedulerConfig,
     });
     controller.timer = setTimeout(runCycle, intervalMilliseconds);
     controller.timer.unref?.();
@@ -736,6 +758,7 @@ async function startScheduler({
           interval,
           horizon: tradingHorizon,
           market_hours_only: marketHoursOnly,
+          scheduler_config: schedulerConfig,
         });
       } catch (error) {
         await writeEngineStatus(userId, {
@@ -744,6 +767,7 @@ async function startScheduler({
           interval,
           horizon: tradingHorizon,
           market_hours_only: marketHoursOnly,
+          scheduler_config: schedulerConfig,
         });
       }
     } else {
@@ -753,6 +777,7 @@ async function startScheduler({
         interval,
         horizon: tradingHorizon,
         market_hours_only: marketHoursOnly,
+        scheduler_config: schedulerConfig,
       });
     }
 
@@ -765,9 +790,59 @@ async function startScheduler({
     interval,
     horizon: tradingHorizon,
     market_hours_only: marketHoursOnly,
+    scheduler_config: schedulerConfig,
   });
   setImmediate(() => void runCycle());
   return status;
+}
+
+async function recoverSchedulers() {
+  const records = await prisma.run((db) =>
+    db.engineStatus.findMany({
+      where: { status: { path: ["is_running"], equals: true } },
+      select: { userId: true, status: true },
+    })
+  );
+  let recovered = 0;
+
+  for (const record of records) {
+    if (schedulerControllers.has(record.userId)) continue;
+    const config = record.status?.scheduler_config;
+    if (!config || !config.interval) {
+      await writeEngineStatus(record.userId, {
+        is_running: false,
+        next_run_at: null,
+        last_error: "Scheduler restart recovery skipped because persisted scheduler configuration is missing.",
+      });
+      continue;
+    }
+    const [marketUniverseSettings, executionSettings] = await Promise.all([
+      readUserSetting(
+        record.userId,
+        "market_universe_settings",
+        getDefaultMarketUniverseSettings()
+      ),
+      readUserSetting(
+        record.userId,
+        "execution_settings",
+        getDefaultExecutionSettings()
+      ),
+    ]);
+    await startScheduler({
+      interval: config.interval,
+      limit: config.limit,
+      riskMultiplier: config.riskMultiplier,
+      marketHoursOnly: config.marketHoursOnly !== false,
+      horizon: config.horizon,
+      symbols: Array.isArray(config.symbols) ? config.symbols : [],
+      marketUniverseSettings,
+      executionSettings,
+      userId: record.userId,
+    });
+    recovered += 1;
+  }
+
+  return recovered;
 }
 
 
@@ -779,6 +854,7 @@ async function startScheduler({
     parseSafetyPercent,
     readActiveStrategyConfig,
     readEngineStatus,
+    recoverSchedulers,
     readUserSafetyStatus,
     startScanJobForUser,
     startScheduler,

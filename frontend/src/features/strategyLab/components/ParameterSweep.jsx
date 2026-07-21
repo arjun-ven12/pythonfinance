@@ -1,5 +1,14 @@
 import ParameterHeatmap from "./ParameterHeatmap";
 
+function countSweepValues(minValue, maxValue, stepValue) {
+  const min = Number(minValue);
+  const max = Number(maxValue);
+  const step = Math.max(1, Number(stepValue) || 1);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) return 0;
+  const steppedValues = Math.floor((max - min) / step) + 1;
+  return (max - min) % step === 0 ? steppedValues : steppedValues + 1;
+}
+
 export default function ParameterSweep({
   error,
   experiments,
@@ -14,6 +23,23 @@ export default function ParameterSweep({
   sweepResults,
   updateSweepConfig,
 }) {
+  const estimatedCombinations =
+    countSweepValues(sweepConfig.emaFastMin, sweepConfig.emaFastMax, sweepConfig.emaFastStep) *
+    countSweepValues(sweepConfig.emaSlowMin, sweepConfig.emaSlowMax, sweepConfig.emaSlowStep) *
+    countSweepValues(sweepConfig.rsiMin, sweepConfig.rsiMax, sweepConfig.rsiStep);
+  const estimatedSymbols =
+    (sweepConfig.universeMode || "SINGLE") === "SP500_TOP_N"
+      ? Math.max(1, Number(sweepConfig.topN) || 1)
+      : (sweepConfig.universeMode || "SINGLE") === "SINGLE"
+        ? Math.max(
+            1,
+            String(sweepConfig.symbol || "")
+              .split(",")
+              .map((symbol) => symbol.trim())
+              .filter(Boolean).length
+          )
+        : null;
+
   return (
       <section className="strategy-lab-card">
         <div className="alerts-panel-header">
@@ -123,8 +149,12 @@ export default function ParameterSweep({
             </div>
           ))}
           <label>
-            <span>Max combinations</span>
+            <span>Max parameter combinations</span>
             <input min="1" max="1000" onChange={(event) => updateSweepConfig("maxCombinations", event.target.value)} type="number" value={sweepConfig.maxCombinations} />
+            <small>
+              {estimatedCombinations} parameter sets
+              {estimatedSymbols ? ` × ${estimatedSymbols} symbols = ${estimatedCombinations * estimatedSymbols} evaluations` : ""}
+            </small>
           </label>
           <button
             disabled={!selectedExperiment || runningSweepExperimentId === selectedExperiment?.id}

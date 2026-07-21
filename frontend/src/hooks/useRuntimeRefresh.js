@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { subscribePollingChannel } from "../services/pollingCoordinator";
 
 export default function useRuntimeRefresh({
   enabled,
@@ -11,33 +12,39 @@ export default function useRuntimeRefresh({
 }) {
   useEffect(() => {
     if (!user || !enabled) return undefined;
-    const intervalId = window.setInterval(() => {
+    return subscribePollingChannel("cockpit-auto-refresh", () => {
       if (!isScanning) onAutoRefresh?.();
-    }, 60000);
-    return () => window.clearInterval(intervalId);
+    }, {
+      immediate: false,
+      intervalMs: 60000,
+      poll: () => null,
+    });
   }, [enabled, isScanning, onAutoRefresh, user]);
 
   useEffect(() => {
     if (!user) return undefined;
-    const intervalId = window.setInterval(() => {
-      onEngineRefresh?.();
-    }, 30000);
-    return () => window.clearInterval(intervalId);
+    return subscribePollingChannel("engine-status", () => onEngineRefresh?.(), {
+      immediate: false,
+      intervalMs: 30000,
+      poll: () => null,
+    });
   }, [onEngineRefresh, user]);
 
   useEffect(() => {
     if (!user) return undefined;
-    const intervalId = window.setInterval(() => {
-      onSafetyRefresh?.();
-    }, 30000);
-    return () => window.clearInterval(intervalId);
+    return subscribePollingChannel("safety-status", () => onSafetyRefresh?.(), {
+      immediate: false,
+      intervalMs: 30000,
+      poll: () => null,
+    });
   }, [onSafetyRefresh, user]);
 
   useEffect(() => {
     if (!user) return undefined;
-    const intervalId = window.setInterval(() => {
-      onPortfolioRefresh?.();
-    }, 30000);
-    return () => window.clearInterval(intervalId);
+    return subscribePollingChannel("portfolio-status", () => onPortfolioRefresh?.(), {
+      immediate: false,
+      intervalMs: 30000,
+      poll: () => null,
+    });
   }, [onPortfolioRefresh, user]);
 }

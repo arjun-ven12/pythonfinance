@@ -67,6 +67,26 @@ function mergeGuardrails(guardrails = {}) {
   };
 }
 
+function validateGuardrailConfig(guardrails) {
+  const errors = [];
+  if (!Number.isInteger(Number(guardrails.minimumTrades)) || Number(guardrails.minimumTrades) < 0) {
+    errors.push("Minimum trades must be a non-negative whole number.");
+  }
+  for (const [field, label] of [
+    ["minimumValidationScore", "Minimum validation"],
+    ["minimumRobustness", "Minimum robustness"],
+    ["minimumWalkForwardStability", "Minimum walk-forward stability"],
+    ["maxStrategyAllocationPct", "Maximum strategy allocation"],
+    ["maxSectorExposurePct", "Maximum sector exposure"],
+  ]) {
+    const value = Number(guardrails[field]);
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      errors.push(`${label} must be between 0% and 100%.`);
+    }
+  }
+  return errors;
+}
+
 function buildMethodInputs(strategy) {
   const validationScore = toNumber(strategy.validationScore, 0) || 0;
   const evidenceCount = toNumber(strategy.evidenceCount, 0) || 0;
@@ -717,6 +737,13 @@ function createStrategyAllocationService({
       await loadStrategyUniverse(userId);
     const requestedMethod = normalizeMethod(body.allocationMethod || deploymentSet?.allocationMethod);
     const requestedGuardrails = mergeGuardrails(body.guardrails || deploymentSet?.guardrailsJson);
+    const guardrailErrors = validateGuardrailConfig(requestedGuardrails);
+    if (guardrailErrors.length) {
+      const error = new Error(guardrailErrors[0]);
+      error.statusCode = 400;
+      error.details = guardrailErrors;
+      throw error;
+    }
     const strategyCards = buildStrategyCards({
       allocationMethod: requestedMethod,
       deploymentSet,

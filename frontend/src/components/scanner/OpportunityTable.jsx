@@ -1,4 +1,5 @@
 import { formatExchange } from "../../utils/marketMetadata";
+import { formatCurrency, formatNumber } from "../../utils/numberFormat";
 
 const TABLE_COLUMNS = [
   { key: "symbol", label: "Symbol", type: "text" },
@@ -59,17 +60,21 @@ export default function OpportunityTable({
         ? "-"
         : Intl.NumberFormat(undefined, {
             notation: "compact",
-            maximumFractionDigits: 1,
+            maximumFractionDigits: 2,
           }).format(Number(value));
     }
 
     if (column.type === "money") {
       const number = Number(value);
-      return Number.isFinite(number) ? `${item.currency || "USD"} ${number.toFixed(2)}` : "-";
+      return Number.isFinite(number) ? formatCurrency(number, item.currency || "USD") : "-";
     }
 
     if (column.type === "percent") {
       return formatPercent(value);
+    }
+
+    if (column.type === "number") {
+      return formatNumber(value);
     }
 
     return value;

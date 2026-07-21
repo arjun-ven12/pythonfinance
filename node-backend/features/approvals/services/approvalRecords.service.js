@@ -4,6 +4,7 @@ function createApprovalRecordsService({
   prisma,
   requireUserId,
   validateSymbol,
+  memoryIngestionService = null,
 }) {
   const allowedApprovalStatuses = new Set([
     "PENDING",
@@ -329,7 +330,7 @@ function buildApprovalTradeEditData(existingRequest, body = {}) {
 async function createApprovalRequestRecord(data, userId) {
   const ownerId = requireUserId(userId);
   try {
-    return await prisma.run((db) =>
+    const request = await prisma.run((db) =>
       db.$transaction(async (transaction) => {
         const request = await transaction.approvalRequest.create({
           data: {
@@ -355,6 +356,8 @@ async function createApprovalRequestRecord(data, userId) {
         return request;
       })
     );
+    if (memoryIngestionService) { const { approvalEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordEvent(approvalEvent(request, "APPROVAL_CREATED")); }
+    return request;
   } catch (error) {
     throw new Error(`Approval request database create failed: ${error.message}`);
   }
@@ -410,12 +413,25 @@ async function updateApprovalRequestRecord(id, updates, userId) {
         throw new Error("Approval request not found.");
       }
 
-      return db.approvalRequest.findFirst({
+      const updated = await db.approvalRequest.findFirst({
         where: {
           id,
           userId: ownerId,
         },
       });
+      if (memoryIngestionService && ["APPROVED", "REJECTED"].includes(updated?.status)) {
+        const { approvalEvent } = require("../../memory/services/memoryEvents");
+        await memoryIngestionService.recordEvent(approvalEvent(updated, updated.status === "APPROVED" ? "APPROVAL_APPROVED" : "APPROVAL_REJECTED"));
+        const opportunityId = updated.raw?.opportunityId || updated.raw?.opportunity_id;
+        if (opportunityId) {
+          const opportunity = await prisma.run((db) => db.opportunity.findFirst({ where: { id: opportunityId, userId: ownerId } }));
+          if (opportunity) {
+            const { opportunityEvent } = require("../../memory/services/memoryEvents");
+            await memoryIngestionService.recordEvent(opportunityEvent(opportunity, updated.status === "APPROVED" ? "OPPORTUNITY_APPROVED" : "OPPORTUNITY_REJECTED", { reason: updated.decisionNote || `Approval ${updated.status.toLowerCase()}.` }));
+          }
+        }
+      }
+      return updated;
     });
   } catch (error) {
     throw new Error(`Approval request database update failed: ${error.message}`);

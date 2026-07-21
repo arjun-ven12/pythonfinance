@@ -32,11 +32,21 @@ export default function StrategyLabFeaturePage({
     fetchStrategyLeaderboard,
     fetchStrategyLifecycleDashboard,
     fetchStrategyMemory,
+    handleAskStrategyQuestion,
+    handleAskStrategyResearchQuestion,
+    handleApplyGeneratedStrategyDraft,
+    handleApproveAndSaveGeneratedStrategyDraft,
+    handleCompareStrategiesCopilot,
+    handleCompareStrategyVersions,
     fetchStrategyExperiments,
     handleAssignStrategyActiveSet,
     handleDeleteStrategyExperiment,
     handleDuplicateStrategyExperiment,
     handleEditStrategyExperiment,
+    handleExplainStrategy,
+    handleGenerateStrategyDraft,
+    handleGenerateStrategyResearchReport,
+    handleProposeStrategyEdit,
     handleRemoveStrategyActiveSet,
     handleRunParameterSweep,
     handleRunPortfolioSimulation,
@@ -47,10 +57,12 @@ export default function StrategyLabFeaturePage({
     handleRunStressTest,
     handleRunStrategyExperiment,
     handleRunWalkForward,
+    handleReviewStrategy,
     handleSetActiveStrategyExperiment,
     handleSubmitStrategyExperiment,
     parameterSweepConfig,
     resetStrategyExperimentForm,
+    resetStrategyCopilotDraft,
     routingActionLoading,
     runningStrategyExperimentId,
     runningRegimeExperimentId,
@@ -65,6 +77,10 @@ export default function StrategyLabFeaturePage({
     setParameterSweepConfig,
     setSelectedStrategyExperimentId,
     setSelectedStrategyRunId,
+    setStrategyCopilotPrompt,
+    setStrategyCopilotPreferences,
+    setStrategyCopilotCompareTargetId,
+    setStrategyCopilotCompareVersionId,
     setStrategyExperimentForm,
     setStrategyRunPeriod,
     setStrategyRunSymbol,
@@ -90,6 +106,11 @@ export default function StrategyLabFeaturePage({
     regimeAnalysisResult,
     savingStrategyDeploymentAllocation,
     stressResult,
+    strategyCopilotDraft,
+    strategyCopilotCompareTargetId,
+    strategyCopilotCompareVersionId,
+    strategyCopilotPreferences,
+    strategyCopilotPrompt,
     walkForwardResult,
   } = strategyLab;
 
@@ -158,7 +179,18 @@ export default function StrategyLabFeaturePage({
       onDelete={handleDeleteStrategyExperiment}
       onDuplicate={handleDuplicateFromLibrary}
       onEdit={handleEditFromLibrary}
+      onApplyGeneratedDraft={handleApplyGeneratedStrategyDraft}
+      onApproveAndSaveGeneratedDraft={handleApproveAndSaveGeneratedStrategyDraft}
+      onAskStrategyQuestion={handleAskStrategyQuestion}
+      onAskStrategyResearchQuestion={handleAskStrategyResearchQuestion}
+      onCompareStrategiesCopilot={handleCompareStrategiesCopilot}
+      onCompareStrategyVersions={handleCompareStrategyVersions}
+      onExplainStrategy={handleExplainStrategy}
       onFormChange={setStrategyExperimentForm}
+      onGenerateDraft={handleGenerateStrategyDraft}
+      onGenerateResearchReport={handleGenerateStrategyResearchReport}
+      onProposeStrategyEdit={handleProposeStrategyEdit}
+      onReviewStrategy={handleReviewStrategy}
       onRun={handleRunStrategyExperiment}
       onRunRegimeAnalysis={handleRunRegimeAnalysis}
       onRunPortfolioSimulation={handleRunPortfolioSimulation}
@@ -172,6 +204,7 @@ export default function StrategyLabFeaturePage({
       onRemoveFromActiveSet={handleRemoveStrategyActiveSet}
       onSetActiveStrategy={handleSetActiveStrategy}
       onSubmit={handleSubmitStrategyExperiment}
+      onDismissGeneratedDraft={resetStrategyCopilotDraft}
       activeSetData={activeSetData}
       runPeriod={strategyRunPeriod}
       routingActionLoading={routingActionLoading}
@@ -204,12 +237,21 @@ export default function StrategyLabFeaturePage({
       strategyDeploymentAllocation={strategyDeploymentAllocation}
       strategyPortfolioResult={strategyPortfolioResult}
       strategyMatrixReplayResult={strategyMatrixReplayResult}
+      strategyCopilotDraft={strategyCopilotDraft}
+      strategyCopilotCompareTargetId={strategyCopilotCompareTargetId}
+      strategyCopilotCompareVersionId={strategyCopilotCompareVersionId}
+      strategyCopilotPreferences={strategyCopilotPreferences}
+      strategyCopilotPrompt={strategyCopilotPrompt}
       strategyPreview={strategyPreview}
       sweepConfig={parameterSweepConfig}
       sweepProgress={strategySweepProgress}
       regimeAnalysisResult={regimeAnalysisResult}
       savingStrategyDeploymentAllocation={savingStrategyDeploymentAllocation}
       stressResult={stressResult}
+      setStrategyCopilotPrompt={setStrategyCopilotPrompt}
+      setStrategyCopilotPreferences={setStrategyCopilotPreferences}
+      setStrategyCopilotCompareTargetId={setStrategyCopilotCompareTargetId}
+      setStrategyCopilotCompareVersionId={setStrategyCopilotCompareVersionId}
       walkForwardResult={walkForwardResult}
       ui={ui}
     />

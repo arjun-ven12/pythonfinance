@@ -29,7 +29,18 @@ export default function StrategyLabWorkspace({
   onDelete,
   onDuplicate,
   onEdit,
+  onAskStrategyQuestion,
+  onAskStrategyResearchQuestion,
+  onApplyGeneratedDraft,
+  onApproveAndSaveGeneratedDraft,
+  onCompareStrategiesCopilot,
+  onCompareStrategyVersions,
+  onExplainStrategy,
   onFormChange,
+  onGenerateDraft,
+  onGenerateResearchReport,
+  onProposeStrategyEdit,
+  onReviewStrategy,
   onSaveDeploymentAllocation,
   onAssignToActiveSet,
   onRemoveFromActiveSet,
@@ -43,6 +54,7 @@ export default function StrategyLabWorkspace({
   onRunWalkForward,
   onSetActiveStrategy,
   onSubmit,
+  onDismissGeneratedDraft,
   runPeriod,
   runningRegimeExperimentId,
   runningSweepExperimentId,
@@ -66,6 +78,11 @@ export default function StrategyLabWorkspace({
   strategyDeploymentAllocation,
   strategyPortfolioResult,
   strategyMatrixReplayResult,
+  strategyCopilotDraft,
+  strategyCopilotCompareTargetId,
+  strategyCopilotCompareVersionId,
+  strategyCopilotPreferences,
+  strategyCopilotPrompt,
   strategyPreview,
   sweepProgress = { percent: 0, label: "Idle" },
   sweepConfig = DEFAULT_PARAMETER_SWEEP,
@@ -73,6 +90,10 @@ export default function StrategyLabWorkspace({
   regimeAnalysisResult,
   savingStrategyDeploymentAllocation,
   stressResult,
+  setStrategyCopilotPrompt,
+  setStrategyCopilotPreferences,
+  setStrategyCopilotCompareTargetId,
+  setStrategyCopilotCompareVersionId,
   walkForwardResult,
   setRunPeriod,
   setRunSymbol,
@@ -226,22 +247,45 @@ export default function StrategyLabWorkspace({
           selectedExperiment={selectedExperiment}
           setSelectedExperimentId={setSelectedExperimentId}
           setSelectedRunId={setSelectedRunId}
+          strategyDeploymentAllocation={strategyDeploymentAllocation}
           strategyLifecycleDashboard={strategyLifecycleDashboard}
         />
       )}
 
       {strategyLabSection === "Builder" && (
         <StrategyBuilder
+          experiments={experiments}
           form={form}
           isEditing={isEditing}
+          onAskStrategyQuestion={onAskStrategyQuestion}
+          onAskStrategyResearchQuestion={onAskStrategyResearchQuestion}
+          onApplyGeneratedDraft={onApplyGeneratedDraft}
+          onApproveAndSaveGeneratedDraft={onApproveAndSaveGeneratedDraft}
           onCancelEdit={onCancelEdit}
+          onCompareStrategiesCopilot={onCompareStrategiesCopilot}
+          onCompareStrategyVersions={onCompareStrategyVersions}
+          onExplainStrategy={onExplainStrategy}
           onFormChange={onFormChange}
+          onDismissGeneratedDraft={onDismissGeneratedDraft}
+          onGenerateDraft={onGenerateDraft}
+          onGenerateResearchReport={onGenerateResearchReport}
+          onProposeStrategyEdit={onProposeStrategyEdit}
+          onReviewStrategy={onReviewStrategy}
           onRunRobustness={onRunRobustness}
           onSubmit={onSubmit}
           preview={strategyPreview}
           runningRobustness={runningRobustnessExperimentId === selectedExperiment?.id}
           selectedExperiment={selectedExperiment}
           stockUniverses={stockUniverses}
+          strategyCopilotDraft={strategyCopilotDraft}
+          strategyCopilotCompareTargetId={strategyCopilotCompareTargetId}
+          strategyCopilotCompareVersionId={strategyCopilotCompareVersionId}
+          strategyCopilotPreferences={strategyCopilotPreferences}
+          strategyCopilotPrompt={strategyCopilotPrompt}
+          setStrategyCopilotCompareTargetId={setStrategyCopilotCompareTargetId}
+          setStrategyCopilotCompareVersionId={setStrategyCopilotCompareVersionId}
+          setStrategyCopilotPreferences={setStrategyCopilotPreferences}
+          setStrategyCopilotPrompt={setStrategyCopilotPrompt}
         />
       )}
 

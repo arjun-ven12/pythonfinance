@@ -95,18 +95,35 @@ export default function AppShell({
                 <p className="eyebrow">Trading Cockpit</p>
               </div>
             </div>
+            {!isSidebarCollapsed ? (
+              <button
+                aria-label="Collapse navigation"
+                className="sidebar-collapse-button"
+                onClick={() => setIsSidebarCollapsed(true)}
+                title="Collapse navigation"
+                type="button"
+              >
+                «
+              </button>
+            ) : null}
+          </div>
+          {isSidebarCollapsed ? (
             <button
-              aria-label={isSidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
-              className="sidebar-collapse-button"
-              onClick={() => setIsSidebarCollapsed((current) => !current)}
-              title={isSidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+              aria-label="Expand navigation"
+              className="sidebar-collapse-button sidebar-expand-button"
+              onClick={() => setIsSidebarCollapsed(false)}
+              title="Expand navigation"
               type="button"
             >
-              {isSidebarCollapsed ? "»" : "«"}
+              »
             </button>
-          </div>
+          ) : null}
           {adminMode ? (
-            <div className="sidebar-admin-card">
+            <div
+              aria-label={`Admin mode - ${getAdminMeta(user)}`}
+              className="sidebar-admin-card"
+              title={isSidebarCollapsed ? `Admin mode - ${getAdminMeta(user)}` : undefined}
+            >
               <span className="sidebar-admin-icon" aria-hidden="true" />
               <div className="sidebar-admin-copy">
                 <div className="sidebar-admin-title-row">

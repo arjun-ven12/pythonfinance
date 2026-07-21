@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { compileStrategySettings } = require("../features/strategyLab/services/strategyCompiler");
 const { validateStrategyDsl } = require("../features/strategyLab/services/strategyDslValidator");
 const { computeDeploymentReadiness } = require("../features/strategyLab/services/deploymentReadiness");
+const createStrategyLabService = require("../features/strategyLab/services/strategyLab.service");
 
 test("builder settings compile into executable nested strategy DSL", () => {
   const { strategyJson, validation } = compileStrategySettings({
@@ -91,6 +92,58 @@ test("DSL validator rejects missing required executable fields", () => {
     }),
     /strategyJson\.executable\./
   );
+});
+
+test("backtest config recompiles partial saved strategyJson before Python execution", () => {
+  const service = createStrategyLabService({
+    appendOutput: (output, chunk) => `${output}${chunk}`,
+    getBacktestSymbols: ({ symbol }) => [symbol],
+    getProcessFailureMessage: (prefix, stderr) => `${prefix}: ${stderr}`,
+    getPythonPath: () => "python",
+    parseJsonOutput: JSON.parse,
+    prisma: {},
+    pythonEngineDir: "",
+    spawn: () => {},
+    strategyStorage: {},
+    validateSymbol: () => true,
+  });
+
+  const config = service.buildExperimentBacktestConfig({
+    id: "experiment-1",
+    name: "Legacy Partial Strategy",
+    description: "Saved before the full execution contract was required.",
+    settingsJson: {
+      riskPerTrade: 0.01,
+      strategyJson: {
+        schemaVersion: "strategy-json/v1",
+        executable: {
+          entryRules: [{ indicator: "RSI", comparator: "<", value: 35 }],
+        },
+      },
+    },
+  });
+
+  assert.equal(config.strategyConfig.strategyJson.schemaVersion, "strategy-json/v1");
+  assert.equal(config.strategyConfig.strategyJson.executable.universe.type, "SINGLE");
+  assert.equal(config.strategyConfig.strategyJson.executable.timeframe.primary, "1D");
+  assert.doesNotThrow(() => validateStrategyDsl(config.strategyConfig.strategyJson));
+});
+
+test("strategy lab service exposes builder settings compiler for copilot workflows", () => {
+  const service = createStrategyLabService({
+    appendOutput: (output, chunk) => `${output}${chunk}`,
+    getBacktestSymbols: ({ symbol }) => [symbol],
+    getProcessFailureMessage: (prefix, stderr) => `${prefix}: ${stderr}`,
+    getPythonPath: () => "python",
+    parseJsonOutput: JSON.parse,
+    prisma: {},
+    pythonEngineDir: "",
+    spawn: () => {},
+    strategyStorage: {},
+    validateSymbol: () => true,
+  });
+
+  assert.equal(typeof service.buildStrategyExperimentSettings, "function");
 });
 
 test("deployment readiness blocks weak strategies", () => {

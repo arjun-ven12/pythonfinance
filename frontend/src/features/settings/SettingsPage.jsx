@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import MemoryPersonalizationWorkspace from "./MemoryPersonalizationWorkspace";
 
 const SETTINGS_SECTIONS = [
   { id: "scanning", label: "Scanning", icon: "R" },
@@ -8,6 +9,7 @@ const SETTINGS_SECTIONS = [
   { id: "markets", label: "Universe", icon: "G" },
   { id: "engine", label: "Engine", icon: "P" },
   { id: "universes", label: "Stock Universes", icon: "L" },
+  { id: "memory", label: "Memory & AI", icon: "M" },
 ];
 
 function formatExecutionMode(mode, labels) {
@@ -957,6 +959,10 @@ export default function SettingsFeaturePage({
                 />
               </article>
             </div>
+          </section>
+
+          <section className="st-section memory-settings-section" ref={(node) => (sectionRefs.current.memory = node)}>
+            <MemoryPersonalizationWorkspace />
           </section>
         </div>
       </div>

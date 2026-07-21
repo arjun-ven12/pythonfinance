@@ -295,6 +295,196 @@
   padding: 18px 0 6px;
 }
 
+.ai-cost {
+  display: grid;
+  gap: 18px;
+  flex-basis: 100%;
+}
+
+.ai-cost__header,
+.ai-cost__panel-head,
+.ai-cost__controls,
+.ai-cost__optimization {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-cost__header span,
+.ai-cost__panel-head span,
+.ai-cost__optimization span,
+.ai-cost__loading {
+  color: rgba(226, 232, 240, 0.68);
+}
+
+.ai-cost__controls select,
+.ai-cost__controls button,
+.ai-cost__panel-head select,
+.ai-cost__panel-head button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 9px 11px;
+}
+
+.ai-cost__metrics,
+.ai-cost__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 10px;
+}
+
+.ai-cost__metric {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(55, 214, 195, 0.06), rgba(255, 255, 255, 0.025));
+  padding: 13px;
+}
+
+.ai-cost__metric span,
+.ai-cost__metric small {
+  color: rgba(226, 232, 240, 0.62);
+}
+
+.ai-cost__metric strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.05rem;
+}
+
+.ai-cost__charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-cost__chart-panel,
+.ai-cost__timeline,
+.ai-cost__optimization,
+.ai-cost__detail {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 14px;
+}
+
+.ai-cost__chart-panel {
+  min-width: 0;
+}
+
+.ai-cost__chart-panel h4,
+.ai-cost__timeline h4,
+.ai-cost__optimization h4,
+.ai-cost__detail h4,
+.ai-cost__detail h5 {
+  margin: 0 0 10px;
+}
+
+.ai-cost__chart {
+  height: 240px;
+}
+
+.ai-cost__chart .recharts-text,
+.ai-cost__chart .recharts-tooltip-label,
+.ai-cost__chart .recharts-default-tooltip {
+  font-size: 0.72rem;
+}
+
+.ai-cost__chart .recharts-cartesian-axis-tick-value {
+  fill: rgba(226, 232, 240, 0.68);
+}
+
+.ai-cost__chart .recharts-default-tooltip {
+  background: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.ai-cost__table tbody tr {
+  cursor: pointer;
+}
+
+.ai-cost__table tbody tr:hover {
+  background: rgba(55, 214, 195, 0.06);
+}
+
+.ai-cost__optimization {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.ai-cost__detail {
+  display: grid;
+  gap: 16px;
+  border-color: rgba(55, 214, 195, 0.28);
+}
+
+.ai-cost__detail-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.ai-cost__breakdown,
+.ai-cost__facts,
+.ai-cost__recommendations,
+.ai-cost__warnings {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-cost__breakdown-row,
+.ai-cost__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ai-cost__breakdown-row small,
+.ai-cost__facts dt {
+  color: rgba(226, 232, 240, 0.62);
+}
+
+.ai-cost__facts {
+  margin: 0;
+}
+
+.ai-cost__facts dd {
+  margin: 0;
+  text-align: right;
+}
+
+.ai-cost__warnings {
+  margin-top: 12px;
+}
+
+.ai-cost__warnings span {
+  border: 1px solid rgba(244, 184, 96, 0.25);
+  border-radius: 6px;
+  background: rgba(244, 184, 96, 0.08);
+  padding: 8px 10px;
+  color: #ffd89a;
+}
+
+.ai-cost__recommendations article {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+
+.ai-cost__recommendations article span {
+  color: rgba(226, 232, 240, 0.62);
+}
+
 @media (max-width: 900px) {
   .admin-dashboard__panel-head,
   .admin-dashboard__header {
@@ -314,5 +504,17 @@
   .admin-dashboard__pagination {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ai-cost__charts-grid,
+  .ai-cost__detail-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-cost__header,
+  .ai-cost__panel-head,
+  .ai-cost__controls {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

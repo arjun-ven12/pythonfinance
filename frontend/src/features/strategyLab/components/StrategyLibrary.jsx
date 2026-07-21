@@ -41,8 +41,12 @@ function getEnvelopeContexts(experiment, lifecycle) {
     lifecycle?.envelope ||
     experiment?.settingsJson?.strategyJson?.executable?.envelope ||
     {};
-  const sectors = Array.isArray(envelope.sectors) ? envelope.sectors.filter(Boolean) : [];
-  const regimes = Array.isArray(envelope.regimes) ? envelope.regimes.filter(Boolean) : [];
+  const sectors = Array.isArray(envelope.sectors)
+    ? [...new Set(envelope.sectors.filter(Boolean))]
+    : [];
+  const regimes = Array.isArray(envelope.regimes)
+    ? [...new Set(envelope.regimes.filter(Boolean))]
+    : [];
   if (!sectors.length || !regimes.length) {
     return [];
   }
@@ -232,10 +236,12 @@ export default function StrategyLibrary({
   selectedExperiment,
   setSelectedExperimentId,
   setSelectedRunId,
+  strategyDeploymentAllocation,
   strategyLifecycleDashboard,
 }) {
   const [routingExperimentId, setRoutingExperimentId] = useState("");
   const [selectedContextKeys, setSelectedContextKeys] = useState([]);
+  const [routingFeedback, setRoutingFeedback] = useState(null);
 
   const lifecycleByExperimentId = useMemo(
     () =>
@@ -257,7 +263,19 @@ export default function StrategyLibrary({
   );
 
   const activeSet = useMemo(() => {
-    const cells = Array.isArray(activeSetData?.cells) ? activeSetData.cells : [];
+    const deploymentMatrixCells = Array.isArray(strategyDeploymentAllocation?.matrix?.cells)
+      ? strategyDeploymentAllocation.matrix.cells
+      : [];
+    const cells = deploymentMatrixCells.length
+      ? deploymentMatrixCells.map((cell) => ({
+          ...cell,
+          experimentId: cell.selectedExperimentId || null,
+          strategyName: cell.strategyName || null,
+          active: String(cell.status || "").toUpperCase() === "ACTIVE",
+        }))
+      : Array.isArray(activeSetData?.cells)
+        ? activeSetData.cells
+        : [];
     const cellsByKey = new Map(
       cells.map((cell) => {
         const experimentTone = strategiesByExperimentId.get(cell.experimentId)?.tone || "azure";
@@ -276,29 +294,54 @@ export default function StrategyLibrary({
     );
 
     return {
-      active: Boolean(activeSetData?.active),
-      owner: activeSetData?.owner || null,
-      sectors: activeSetData?.sectors || [],
-      regimes: activeSetData?.regimes || [],
+      active:
+        Boolean(strategyDeploymentAllocation?.activeSet?.owner) || Boolean(activeSetData?.active),
+      owner: strategyDeploymentAllocation?.activeSet?.owner || activeSetData?.owner || null,
+      sectors:
+        strategyDeploymentAllocation?.matrix?.sectors ||
+        activeSetData?.sectors ||
+        [],
+      regimes:
+        strategyDeploymentAllocation?.matrix?.regimes ||
+        activeSetData?.regimes ||
+        [],
       cellsByKey,
       membershipByExperimentId,
-      routed: Number(activeSetData?.routed || 0),
-      pending: Number(activeSetData?.pending || 0),
-      sitOut: Number(activeSetData?.sitOut || 0),
-      strategies: (activeSetData?.membership || []).map((entry) => ({
+      routed:
+        strategyDeploymentAllocation?.matrix?.cells?.filter(
+          (cell) => String(cell.status || "").toUpperCase() === "ACTIVE"
+        ).length || Number(activeSetData?.routed || 0),
+      pending:
+        strategyDeploymentAllocation?.matrix?.cells?.filter(
+          (cell) => String(cell.status || "").toUpperCase() === "PENDING"
+        ).length || Number(activeSetData?.pending || 0),
+      sitOut:
+        strategyDeploymentAllocation?.matrix?.cells?.filter(
+          (cell) => String(cell.status || "").toUpperCase() === "SIT_OUT"
+        ).length || Number(activeSetData?.sitOut || 0),
+      strategies: (
+        strategyDeploymentAllocation?.activeSet?.routedStrategies ||
+        activeSetData?.membership ||
+        []
+      ).map((entry) => ({
         ...entry,
+        strategyName: entry.strategyName || entry.name || null,
         tone: strategiesByExperimentId.get(entry.experimentId)?.tone || "azure",
       })),
     };
-  }, [activeSetData, strategiesByExperimentId]);
+  }, [activeSetData, strategiesByExperimentId, strategyDeploymentAllocation]);
 
   const selectedRoutingExperiment =
     experiments.find((experiment) => experiment.id === routingExperimentId) || null;
   const selectedRoutingMembership =
     activeSet.membershipByExperimentId.get(selectedRoutingExperiment?.id) || null;
   const assignedContextKeySet = new Set(
-    (activeSetData?.cells || [])
-      .filter((cell) => cell.experimentId === selectedRoutingExperiment?.id)
+    Array.from(activeSet.cellsByKey.values())
+      .filter(
+        (cell) =>
+          cell.experimentId === selectedRoutingExperiment?.id &&
+          String(cell.status || "").toUpperCase() !== "SIT_OUT"
+      )
       .map((cell) => cell.key || `${cell.sector}::${cell.regime}`)
   );
 
@@ -341,6 +384,7 @@ export default function StrategyLibrary({
   );
 
   const toggleContext = (contextKey) => {
+    setRoutingFeedback(null);
     setSelectedContextKeys((current) =>
       current.includes(contextKey)
         ? current.filter((value) => value !== contextKey)
@@ -351,6 +395,7 @@ export default function StrategyLibrary({
   const openRoutingManager = (experimentId) => {
     setRoutingExperimentId((current) => (current === experimentId ? "" : experimentId));
     setSelectedContextKeys([]);
+    setRoutingFeedback(null);
   };
 
   return (
@@ -728,10 +773,25 @@ export default function StrategyLibrary({
                                 const contextKey = normalizeContextKey(context);
                                 const assigned = assignedContextKeySet.has(contextKey);
                                 const selected = selectedContextKeys.includes(contextKey);
+                                const currentCell = activeSet.cellsByKey.get(contextKey) || null;
+                                const currentRouteName =
+                                  currentCell?.strategyName ||
+                                  strategiesByExperimentId.get(currentCell?.experimentId)?.name ||
+                                  null;
+                                const replacingAnotherStrategy =
+                                  Boolean(currentCell?.experimentId) &&
+                                  currentCell.experimentId !== experiment.id &&
+                                  String(currentCell.status || "").toUpperCase() !== "SIT_OUT";
                                 return (
                                   <button
                                     className={`strategy-library-routing-chip ${
-                                      assigned ? "assigned" : selected ? "selected" : ""
+                                      assigned
+                                        ? "assigned"
+                                        : replacingAnotherStrategy
+                                          ? "occupied"
+                                          : selected
+                                            ? "selected"
+                                            : ""
                                     }`}
                                     key={contextKey}
                                     onClick={() => toggleContext(contextKey)}
@@ -747,6 +807,18 @@ export default function StrategyLibrary({
                                           ? `${context.sampleCount} trades · pending evidence`
                                           : "No matured evidence yet"}
                                     </span>
+                                    <span className="strategy-library-routing-current">
+                                      {assigned
+                                        ? "Currently routed here"
+                                        : currentRouteName
+                                          ? `Current route: ${currentRouteName}`
+                                          : "Current route: Sit out"}
+                                    </span>
+                                    {selected && replacingAnotherStrategy && (
+                                      <span className="strategy-library-routing-replace">
+                                        Will replace {currentRouteName}
+                                      </span>
+                                    )}
                                   </button>
                                 );
                               })}
@@ -763,7 +835,10 @@ export default function StrategyLibrary({
                                     .filter((context) =>
                                       selectedContextKeys.includes(normalizeContextKey(context))
                                     )
-                                    .filter((context) => !assignedContextKeySet.has(normalizeContextKey(context)))
+                                    .filter(
+                                      (context) =>
+                                        !assignedContextKeySet.has(normalizeContextKey(context))
+                                    )
                                     .map((context) => ({
                                       sector: context.sector,
                                       regime: context.regime,
@@ -771,11 +846,22 @@ export default function StrategyLibrary({
                                   const result = await onAssignToActiveSet(experiment.id, contexts);
                                   if (result) {
                                     setSelectedContextKeys([]);
+                                    setRoutingFeedback({
+                                      type: "success",
+                                      message: `${contexts.length} routing ${contexts.length === 1 ? "cell" : "cells"} saved. The allocation matrix now uses ${experiment.name}.`,
+                                    });
+                                  } else {
+                                    setRoutingFeedback({
+                                      type: "error",
+                                      message: "The routing change was not saved. Check the Strategy Lab error message and try again.",
+                                    });
                                   }
                                 }}
                                 type="button"
                               >
-                                Assign selected contexts
+                                {routingActionLoading === experiment.id
+                                  ? "Saving routing..."
+                                  : "Assign / replace selected contexts"}
                               </button>
                               <button
                                 disabled={
@@ -795,11 +881,22 @@ export default function StrategyLibrary({
                                   const result = await onRemoveFromActiveSet(experiment.id, contexts);
                                   if (result) {
                                     setSelectedContextKeys([]);
+                                    setRoutingFeedback({
+                                      type: "success",
+                                      message: `${contexts.length} routing ${contexts.length === 1 ? "cell" : "cells"} removed and saved.`,
+                                    });
+                                  } else {
+                                    setRoutingFeedback({
+                                      type: "error",
+                                      message: "The routing removal was not saved. Check the Strategy Lab error message and try again.",
+                                    });
                                   }
                                 }}
                                 type="button"
                               >
-                                Remove selected contexts
+                                {routingActionLoading === experiment.id
+                                  ? "Saving routing..."
+                                  : "Remove selected contexts"}
                               </button>
                               <button
                                 className="strategy-library-routing-close"
@@ -809,6 +906,14 @@ export default function StrategyLibrary({
                                 Close
                               </button>
                             </div>
+                            {routingFeedback && (
+                              <p
+                                className={`strategy-library-routing-feedback ${routingFeedback.type}`}
+                                role={routingFeedback.type === "error" ? "alert" : "status"}
+                              >
+                                {routingFeedback.message}
+                              </p>
+                            )}
                           </>
                         ) : (
                           <p className="strategy-library-evidence-empty">

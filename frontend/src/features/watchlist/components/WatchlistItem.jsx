@@ -1,4 +1,5 @@
 import { formatExchange } from "../../../utils/marketMetadata";
+import { formatCurrency, formatPercent } from "../../../utils/numberFormat";
 
 function formatClose(item) {
   if (!item || item.close == null || item.close === "") {
@@ -7,7 +8,7 @@ function formatClose(item) {
 
   const currency = item.currency || "USD";
   const close = Number(item.close);
-  return Number.isFinite(close) ? `${currency} ${close.toFixed(2)}` : "-";
+  return Number.isFinite(close) ? formatCurrency(close, currency) : "-";
 }
 
 function formatTimestamp(item) {
@@ -50,7 +51,7 @@ function OverflowMenu({ onRemove, symbol }) {
 function formatMoney(value, currency = "USD") {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return `${currency} -`;
-  return `${currency} ${numeric.toFixed(2)}`;
+  return formatCurrency(numeric, currency);
 }
 
 function formatCompactNumber(value) {
@@ -58,7 +59,7 @@ function formatCompactNumber(value) {
   if (!Number.isFinite(numeric)) return "-";
   return new Intl.NumberFormat(undefined, {
     notation: "compact",
-    maximumFractionDigits: 1,
+    maximumFractionDigits: 2,
   }).format(numeric);
 }
 
@@ -145,7 +146,7 @@ export default function WatchlistItem({
         </strong>
         <small className={liveChange >= 0 ? "quote-up" : "quote-down"}>
           {changePercent >= 0 ? "+" : ""}
-          {changePercent.toFixed(2)}%
+          {formatPercent(changePercent)}
         </small>
       </div>
 

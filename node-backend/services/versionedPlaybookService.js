@@ -931,7 +931,7 @@ async function getSnapshot(userId, versionId) {
 async function generateAiPlaybookRecommendation(userId, _sourceData, playbookId) {
   const ownerId = requireUserId(userId);
   if (!aiService.isConfigured()) {
-    return { generated: false, stored: false, error: "OPENAI_API_KEY is not configured." };
+    return { generated: false, stored: false, error: "AI provider is not configured." };
   }
   const dashboard = await getPlaybookDashboard(ownerId, {}, playbookId);
   if (!dashboard.active_version) {

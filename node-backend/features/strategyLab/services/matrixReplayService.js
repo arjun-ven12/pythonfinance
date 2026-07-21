@@ -13,6 +13,18 @@ function normalizeMatrixKey(sector, regime) {
   return `${normalizeKey(sector, "UNKNOWN")}::${normalizeKey(regime, "UNKNOWN")}`;
 }
 
+function normalizeSymbolList(values = []) {
+  const list = Array.isArray(values)
+    ? values
+    : String(values || "").split(",");
+
+  return [...new Set(
+    list
+      .map((value) => String(value || "").trim().toUpperCase())
+      .filter(Boolean)
+  )];
+}
+
 function createMatrixReplayService({
   appendOutput,
   getProcessFailureMessage,
@@ -69,7 +81,7 @@ function createMatrixReplayService({
     });
   }
 
-  async function loadDeploymentReplayContext(userId) {
+  async function loadDeploymentReplayContext(userId, matrixOverride = null) {
     const deploymentSet = await prisma.run((db) =>
       db.strategyDeploymentSet.findUnique({
         where: { userId },
@@ -93,13 +105,14 @@ function createMatrixReplayService({
       throw new Error("No deployment set found for this user.");
     }
 
+    const sourceRoutes = Array.isArray(matrixOverride?.cells) ? matrixOverride.cells : (deploymentSet.routes || []);
     const routeExperimentIds = [...new Set(
-      (deploymentSet.routes || [])
+      sourceRoutes
         .map((route) => route.selectedExperimentId)
         .filter(Boolean)
     )];
     const routeVersionIds = [...new Set(
-      (deploymentSet.routes || [])
+      sourceRoutes
         .map((route) => route.selectedStrategyVersionId)
         .filter(Boolean)
         .concat(deploymentSet.ownerStrategyVersionId ? [deploymentSet.ownerStrategyVersionId] : [])
@@ -156,7 +169,7 @@ function createMatrixReplayService({
 
     const strategies = [];
     const strategyLookup = {};
-    for (const route of deploymentSet.routes || []) {
+    for (const route of sourceRoutes) {
       const selectedVersion =
         (route.selectedStrategyVersionId && versionById.get(route.selectedStrategyVersionId)) ||
         (route.selectedExperimentId && latestVersionByExperimentId.get(route.selectedExperimentId)) ||
@@ -202,7 +215,7 @@ function createMatrixReplayService({
       }
     }
 
-    const matrixCells = (deploymentSet.routes || []).map((route) => ({
+    const matrixCells = sourceRoutes.map((route) => ({
       key: normalizeMatrixKey(route.sector, route.regime),
       sector: route.sector,
       regime: route.regime,
@@ -232,21 +245,19 @@ function createMatrixReplayService({
     };
   }
 
-  async function runMatrixReplay({ userId, body = {} }) {
+  async function runMatrixReplay({ userId, body = {}, matrixOverride = null }) {
     const { deploymentSet, strategyLookup, strategies, matrix } =
-      await loadDeploymentReplayContext(userId);
+      await loadDeploymentReplayContext(userId, matrixOverride);
 
-    const symbols = Array.isArray(body.symbols)
-      ? body.symbols.map((symbol) => String(symbol).trim().toUpperCase()).filter(Boolean)
-      : [];
+    const symbols = normalizeSymbolList(
+      body.symbols || body.symbolList || body.symbol || []
+    );
 
     if (!symbols.length) {
       throw new Error("Matrix replay requires at least one symbol.");
     }
 
-    const universeSymbols = Array.isArray(body.universeSymbols)
-      ? body.universeSymbols
-      : symbols;
+    const universeSymbols = normalizeSymbolList(body.universeSymbols || symbols);
     const universeMembers = Array.isArray(body.universeMembers)
       ? body.universeMembers
       : [];

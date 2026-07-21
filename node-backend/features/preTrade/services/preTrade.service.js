@@ -3,6 +3,7 @@ function createPreTradeService({
   getDefaultExecutionSettings,
   getPortfolioForUser,
   getProcessFailureMessage,
+  getPythonAiGatewayEnv = () => ({}),
   getPythonPath,
   getTradingHorizon,
   parseJsonOutput,
@@ -104,6 +105,10 @@ function createPreTradeService({
         buildPreTradeAnalysisArgs(ownerId, body || {}, context),
         {
           cwd: pythonEngineDir,
+          env: {
+            ...process.env,
+            ...getPythonAiGatewayEnv(ownerId),
+          },
           stdio: ["pipe", "pipe", "pipe"],
         }
       );

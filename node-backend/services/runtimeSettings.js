@@ -23,6 +23,8 @@ function getDefaultExecutionSettings() {
     auto_execute_confidence_threshold: 85,
     allow_trading_near_earnings: false,
     max_trade_size_for_auto_execution: 5000,
+    max_auto_trades_per_cycle: 5,
+    max_auto_trades_per_day: 20,
     allow_overnight_positions: true,
     pause_automation_during_major_macro_events: true,
     live_trading_enabled: false,
@@ -61,6 +63,14 @@ function getExecutionSettingsFromRequest(
   const maxLiveTradeSize = Number.parseFloat(
     source.max_live_trade_size ?? source.maxLiveTradeSize
   );
+  const maxAutoTradesPerCycle = Number.parseInt(
+    source.max_auto_trades_per_cycle ?? source.maxAutoTradesPerCycle,
+    10
+  );
+  const maxAutoTradesPerDay = Number.parseInt(
+    source.max_auto_trades_per_day ?? source.maxAutoTradesPerDay,
+    10
+  );
   const maxDailyLiveNotional = Number.parseFloat(
     source.max_daily_live_notional ?? source.maxDailyLiveNotional
   );
@@ -83,6 +93,12 @@ function getExecutionSettingsFromRequest(
     max_trade_size_for_auto_execution: Number.isFinite(maxTradeSize)
       ? Math.max(0, maxTradeSize)
       : currentSettings.max_trade_size_for_auto_execution,
+    max_auto_trades_per_cycle: Number.isFinite(maxAutoTradesPerCycle)
+      ? Math.max(1, maxAutoTradesPerCycle)
+      : currentSettings.max_auto_trades_per_cycle,
+    max_auto_trades_per_day: Number.isFinite(maxAutoTradesPerDay)
+      ? Math.max(1, maxAutoTradesPerDay)
+      : currentSettings.max_auto_trades_per_day,
     allow_overnight_positions: parseBooleanSetting(
       source.allow_overnight_positions ?? source.allowOvernightPositions,
       currentSettings.allow_overnight_positions

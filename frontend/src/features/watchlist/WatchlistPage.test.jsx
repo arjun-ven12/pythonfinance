@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WatchlistPage from "./WatchlistPage";
 import { __resetStockPriceChartTestCache } from "../../components/stocks/StockPriceChart";
 
@@ -17,12 +17,14 @@ describe("WatchlistPage", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     __resetStockPriceChartTestCache();
-    global.ResizeObserver = class {
+    window.ResizeObserver = class {
       observe() {}
       unobserve() {}
       disconnect() {}
     };
   });
+
+  afterEach(cleanup);
 
   it("opens the shared stock chart in the watchlist workspace modal", async () => {
     vi.spyOn(window, "fetch").mockImplementation(() =>
@@ -50,8 +52,9 @@ describe("WatchlistPage", () => {
     render(
       <WatchlistPage
         formatPercent={(value) => `${value}%`}
+        isScanning={false}
+        onScanWatchlist={vi.fn()}
         scanWatchlistOnly={false}
-        setDetailSymbol={vi.fn()}
         setScanWatchlistOnly={vi.fn()}
         setSelectedSymbol={vi.fn()}
         toggleWatchlist={vi.fn()}
@@ -86,5 +89,51 @@ describe("WatchlistPage", () => {
 
     expect(await screen.findByText("Price action")).toBeInTheDocument();
     expect(screen.getAllByText("YAHOO_FINANCE").length).toBeGreaterThan(0);
+  });
+
+  it("starts a watchlist-only scan from the command button", () => {
+    const onScanWatchlist = vi.fn();
+    const setScanWatchlistOnly = vi.fn();
+
+    render(
+      <WatchlistPage
+        formatPercent={(value) => `${value}%`}
+        isScanning={false}
+        onScanWatchlist={onScanWatchlist}
+        scanWatchlistOnly={false}
+        setScanWatchlistOnly={setScanWatchlistOnly}
+        setSelectedSymbol={vi.fn()}
+        toggleWatchlist={vi.fn()}
+        watchlistError=""
+        watchlistItems={[]}
+        watchlistSource="database"
+        watchlistSymbols={["STX"]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Scan watchlist only" }));
+
+    expect(setScanWatchlistOnly).toHaveBeenCalledWith(true);
+    expect(onScanWatchlist).toHaveBeenCalledOnce();
+  });
+
+  it("disables watchlist scanning while a scan is already running", () => {
+    render(
+      <WatchlistPage
+        formatPercent={(value) => `${value}%`}
+        isScanning
+        onScanWatchlist={vi.fn()}
+        scanWatchlistOnly
+        setScanWatchlistOnly={vi.fn()}
+        setSelectedSymbol={vi.fn()}
+        toggleWatchlist={vi.fn()}
+        watchlistError=""
+        watchlistItems={[]}
+        watchlistSource="database"
+        watchlistSymbols={["STX"]}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Scanning watchlist..." })).toBeDisabled();
   });
 });

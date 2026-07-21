@@ -1,5 +1,6 @@
 import ProgressBar from "../common/ProgressBar";
 import { formatExchange } from "../../utils/marketMetadata";
+import { formatCurrency, formatNumber } from "../../utils/numberFormat";
 
 export default function OpportunityCard({
   formatPercent,
@@ -17,13 +18,13 @@ export default function OpportunityCard({
   const latestClose =
     item.close == null || item.close === ""
       ? "-"
-      : `${currency} ${Number(item.close).toFixed(2)}`;
+      : formatCurrency(item.close, currency);
   const marketCap =
     item.market_cap == null
       ? "Market cap n/a"
       : Intl.NumberFormat(undefined, {
           notation: "compact",
-          maximumFractionDigits: 1,
+          maximumFractionDigits: 2,
         }).format(Number(item.market_cap));
 
   return (
@@ -48,11 +49,11 @@ export default function OpportunityCard({
         <span className={`badge stock-card-signal ${item.signal.toLowerCase()}`}>{item.signal}</span>
         <div>
           <span>Score</span>
-          <strong>{item.opportunity_score}</strong>
+          <strong>{formatNumber(item.opportunity_score)}</strong>
         </div>
         <div>
           <span>Confidence</span>
-          <strong>{item.confidence}</strong>
+          <strong>{formatNumber(item.confidence)}</strong>
         </div>
         <div>
           <span>Latest Close</span>
@@ -105,7 +106,7 @@ export default function OpportunityCard({
             </div>
             <div>
               <dt>Trades</dt>
-              <dd>{item.trades}</dd>
+              <dd>{formatNumber(item.trades)}</dd>
             </div>
           </dl>
 

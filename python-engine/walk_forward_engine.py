@@ -19,6 +19,21 @@ def metric(result, key, default=0):
         return default
 
 
+def to_json_safe(value):
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    if hasattr(value, "item"):
+        try:
+            return to_json_safe(value.item())
+        except (TypeError, ValueError):
+            pass
+    if isinstance(value, dict):
+        return {str(key): to_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_json_safe(item) for item in value]
+    return value
+
+
 def run_segment(symbol, start_date, end_date, config, phase, index):
     result = run_backtest(
         symbol=symbol,
@@ -40,7 +55,7 @@ def run_segment(symbol, start_date, end_date, config, phase, index):
         "sharpe": result.get("sharpe_ratio"),
         "maxDrawdown": result.get("max_drawdown_pct"),
         "tradeCount": result.get("completed_trades"),
-        "metrics": result,
+        "metrics": to_json_safe(result),
     }
 
 
@@ -211,7 +226,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    print(json.dumps(run_walk_forward(json.loads(args.config))))
+    print(json.dumps(to_json_safe(run_walk_forward(json.loads(args.config)))))
 
 
 if __name__ == "__main__":

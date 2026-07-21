@@ -4,6 +4,11 @@ const { requireUserId } = require("../repositories/ownership");
 
 const DEFAULT_STARTING_CASH = 100000;
 const EPSILON = 0.000001;
+let memoryIngestionService = null;
+
+function setMemoryIngestionService(service) {
+  memoryIngestionService = service || null;
+}
 
 function toNumber(value, fallback = 0) {
   if (value === null || value === undefined || value === "") {
@@ -485,7 +490,20 @@ function comparePortfolio(ledgerState, cachedState) {
   };
 }
 
-async function rebuildCaches(transaction, userId, cachedState = null) {
+function hasMaterialPortfolioChange(previous, next, force = false) {
+  if (force || !previous) return true;
+  const equityBase = Math.max(Math.abs(toNumber(previous.equity)), 1);
+  const cashBase = Math.max(Math.abs(toNumber(previous.cash)), 1);
+  if (Math.abs(toNumber(next.equity) - toNumber(previous.equity)) / equityBase >= 0.001) return true;
+  if (Math.abs(toNumber(next.cash) - toNumber(previous.cash)) / cashBase >= 0.001) return true;
+  const previousPositions = positionArray(previous.positions);
+  const nextPositions = positionArray(next.positions);
+  if (previousPositions.length !== nextPositions.length) return true;
+  const quantities = new Map(previousPositions.map((position) => [normalizeSymbol(position.symbol), toNumber(position.quantity)]));
+  return nextPositions.some((position) => Math.abs((quantities.get(normalizeSymbol(position.symbol)) || 0) - toNumber(position.quantity)) > EPSILON);
+}
+
+async function rebuildCaches(transaction, userId, cachedState = null, memoryContext = {}) {
   const events = await ledgerRepository.listEvents(transaction, userId);
   const ledgerState = reconstructPortfolio(events);
   const comparison = comparePortfolio(ledgerState, cachedState);
@@ -510,7 +528,7 @@ async function rebuildCaches(transaction, userId, cachedState = null) {
     });
   }
 
-  await transaction.portfolioState.create({
+  const snapshot = await transaction.portfolioState.create({
     data: {
       userId,
       equity: ledgerState.equity,
@@ -534,7 +552,15 @@ async function rebuildCaches(transaction, userId, cachedState = null) {
     },
   });
 
-  return { ledgerState, reconciliation };
+  if (memoryIngestionService && hasMaterialPortfolioChange(cachedState, ledgerState, memoryContext.forceMemory)) {
+    const { portfolioSnapshotEvent } = require("../features/memory/services/memoryEvents");
+    await memoryIngestionService.recordFromPortfolio(
+      portfolioSnapshotEvent(snapshot, memoryContext),
+      { transaction, critical: Boolean(memoryContext.auditCritical) }
+    );
+  }
+
+  return { ledgerState, reconciliation, snapshot };
 }
 
 async function appendPaperExecution(
@@ -855,10 +881,12 @@ module.exports = {
   estimateLedgerImpact,
   ensureLedgerInitialized,
   getPortfolioForUser,
+  hasMaterialPortfolioChange,
   recordManualTrade,
   rebuildCaches,
   rebuildPortfolioFromLedger,
   reconstructPortfolio,
+  setMemoryIngestionService,
   syncLedgerFromBrokerAccount,
   verifyUserLedger,
 };

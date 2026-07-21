@@ -10,6 +10,10 @@ import AppShell from "../../components/Layout/AppShell";
 import ChartPanel from "../../components/common/ChartPanel";
 import ScanProgressPanel from "../../components/scanner/ScanProgressPanel";
 import formatJsonSummary from "../../utils/formatJsonSummary";
+import {
+  formatNumber as formatDisplayNumber,
+  formatPercent as formatDisplayPercent,
+} from "../../utils/numberFormat";
 import LoginRegisterScreen from "../auth/LoginRegisterScreen";
 import LoadingTerminalScreen from "../auth/LoadingTerminalScreen";
 import AccessDeniedPage from "../auth/AccessDeniedPage";
@@ -35,6 +39,7 @@ import usePreTradeAnalysis from "../approvals/hooks/usePreTradeAnalysis";
 import useProposedOrders from "../approvals/hooks/useProposedOrders";
 import PlaybookPage from "../playbook/PlaybookPage";
 import PortfolioFeaturePage from "../portfolio/PortfolioPage";
+import ResearchFeaturePage from "../research/ResearchPage";
 import usePortfolio from "../portfolio/hooks/usePortfolio";
 import ScannerFeaturePage from "../scanner/ScannerPage";
 import useScanJobs from "../scanner/hooks/useScanJobs";
@@ -113,6 +118,7 @@ const TABS = [
   "Scanner",
   "Watchlist",
   "Strategy Lab",
+  "Research",
   "Playbook",
   "Validation",
   "IBKR",
@@ -134,6 +140,7 @@ const ROUTE_TO_TAB = {
   "/portfolio": "Portfolio",
   "/alerts": "Alerts",
   "/strategy-lab": "Strategy Lab",
+  "/research": "Research",
   "/playbook": "Playbook",
   "/validation": "Validation",
   "/ibkr": "IBKR",
@@ -283,7 +290,7 @@ function formatSafetyPercent(value) {
     return "-";
   }
 
-  return `${(numericValue * 100).toFixed(2)}%`;
+  return formatDisplayPercent(numericValue, { scale: 100 });
 }
 
 function App({ authOverride, initialTab }) {
@@ -994,6 +1001,7 @@ function App({ authOverride, initialTab }) {
     isScanning,
     progress: scanProgress,
     runScan: handleRunScan,
+    runWatchlistScan: handleRunWatchlistScan,
     runSymbolScan,
   } = scanJobs;
 
@@ -1388,14 +1396,16 @@ function App({ authOverride, initialTab }) {
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
-  const formatPercent = (value) => `${Number(value).toFixed(2)}%`;
+  const formatPercent = (value) => formatDisplayPercent(value);
   const formatMoney = (value) => {
     const number = Number(value);
-    return Number.isFinite(number) ? `$${number.toFixed(2)}` : "-";
+    return Number.isFinite(number) ? `$${formatDisplayNumber(number)}` : "-";
   };
   const formatRatioPercent = (value) => {
     const number = Number(value);
-    return Number.isFinite(number) ? `${(number * 100).toFixed(2)}%` : "-";
+    return Number.isFinite(number)
+      ? formatDisplayPercent(number, { scale: 100 })
+      : "-";
   };
   const renderTradeRows = (tradeList, showUnrealized = false) => {
     if (tradeList.length === 0) {
@@ -1684,8 +1694,9 @@ function App({ authOverride, initialTab }) {
       {activeTab === "Watchlist" && (
         <WatchlistFeaturePage
           formatPercent={formatPercent}
+          isScanning={isScanning}
+          onScanWatchlist={handleRunWatchlistScan}
           scanWatchlistOnly={scanWatchlistOnly}
-          setDetailSymbol={setDetailSymbol}
           setScanWatchlistOnly={setScanWatchlistOnly}
           setSelectedSymbol={setSelectedSymbol}
           toggleWatchlist={toggleWatchlist}
@@ -1848,6 +1859,8 @@ function App({ authOverride, initialTab }) {
           syncInProgress={isAutoSyncingBrokerLedger}
         />
       )}
+
+      {activeTab === "Research" && <ResearchFeaturePage />}
 
       {activeTab === "Settings" && (
         <SettingsFeaturePage

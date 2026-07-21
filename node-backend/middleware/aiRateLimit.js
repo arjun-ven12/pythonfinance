@@ -7,10 +7,10 @@ function aiRateLimitHandler(req, res) {
   });
 }
 
-function createAiRateLimiter() {
+function createAiRateLimiter({ limit = 30, windowMs = 60 * 1000 } = {}) {
   return rateLimit({
-    windowMs: 60 * 1000,
-    limit: 30,
+    windowMs,
+    limit,
     standardHeaders: "draft-8",
     legacyHeaders: false,
     keyGenerator: (req) => req.user?.id || ipKeyGenerator(req),
@@ -18,6 +18,11 @@ function createAiRateLimiter() {
   });
 }
 
+function createInternalAiRateLimiter({ limit = 300 } = {}) {
+  return createAiRateLimiter({ limit });
+}
+
 module.exports = {
   createAiRateLimiter,
+  createInternalAiRateLimiter,
 };

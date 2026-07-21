@@ -1023,6 +1023,7 @@ function createBrokerPaperExecutionService({
             raw: {
               broker_order_id: decoratedOrder.id,
               broker_fill_count: decoratedOrder.fills.length,
+              broker_fill_ids: decoratedOrder.fills.map((fill) => fill.id),
             },
           },
           options.decisionNote || approval.decisionNote || null

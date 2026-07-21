@@ -15,6 +15,7 @@ const ROUTES = {
   "/scanner": lazy(() => import("../../pages/ScannerPage")),
   "/approvals": lazy(() => import("../../pages/ApprovalsPage")),
   "/portfolio": lazy(() => import("../../pages/PortfolioPage")),
+  "/research": lazy(() => import("../../pages/ResearchPage")),
   "/strategy-lab": lazy(() => import("../../pages/StrategyLabPage")),
   "/validation": lazy(() => import("../../pages/ValidationPage")),
   "/playbook": lazy(() => import("../../pages/PlaybookPage")),

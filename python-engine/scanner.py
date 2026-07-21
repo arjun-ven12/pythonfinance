@@ -679,6 +679,11 @@ for symbol_index, symbol in enumerate(symbols, start=1):
                 "OpenAI news risk layer blocked new BUY; downgraded to HOLD."
             )
 
+        if openai_news_reasoning.get("fallbackUsed"):
+            signal_data["reasons"].append(
+                "AI news reasoning unavailable; neutral fallback was used."
+            )
+
         backtest_result = run_backtest(
             symbol=symbol,
             initial_cash=1000,

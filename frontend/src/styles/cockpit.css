@@ -43,6 +43,8 @@
 @import "../features/alerts/alertsLegacy.css";
 @import "../features/approvals/preTrade.css";
 @import "../features/portfolio/paperPortfolio.css";
+@import "../features/portfolio/portfolioCopilot.css";
+@import "../features/research/research.css";
 @import "../features/settings/settings.css";
 @import "./themes/legacyDarkCompatibility.css";
 @import "../features/broker/broker.css";

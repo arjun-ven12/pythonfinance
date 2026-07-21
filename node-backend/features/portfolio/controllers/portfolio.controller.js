@@ -11,9 +11,63 @@ function createPortfolioController(deps) {
     withJsonFallback,
     verifyUserLedger,
     withPrismaSource,
+    portfolioCopilotService,
+    portfolioAdvisorService,
+    portfolioProposalService,
   } = deps;
 
   return {
+    async listCopilotProposals(req, res) {
+      try { res.json({ proposals: await portfolioProposalService.list(req.user.id) }); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async saveCopilotProposal(req, res) {
+      try { res.status(201).json(await portfolioProposalService.save(req.user.id, req.body || {})); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async approveCopilotProposal(req, res) {
+      try { res.json(await portfolioProposalService.approve(req.user.id, req.params.id, req.body?.reason)); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async rejectCopilotProposal(req, res) {
+      try { res.json(await portfolioProposalService.reject(req.user.id, req.params.id, req.body?.reason)); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async recommendWithCopilot(req, res) {
+      try { res.json(await portfolioAdvisorService.recommend(req.user.id, req.body || {})); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async simulateWithCopilot(req, res) {
+      try { res.json(await portfolioAdvisorService.scenario(req.user.id, req.body || {})); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async compareWithCopilot(req, res) {
+      try { res.json(await portfolioAdvisorService.compare(req.user.id, req.body || {})); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); }
+    },
+
+    async generateCopilotOverview(req, res) {
+      try {
+        res.json(await portfolioCopilotService.generateOverview(req.user.id, req.body || {}));
+      } catch (error) {
+        res.status(error.statusCode || 500).json({ error: error.message });
+      }
+    },
+
+    async askCopilot(req, res) {
+      try {
+        res.json(await portfolioCopilotService.ask(req.user.id, req.body || {}));
+      } catch (error) {
+        res.status(error.statusCode || 500).json({ error: error.message });
+      }
+    },
+
     async getRiskDashboard(req, res) {
       try {
         await syncProposedTradesFromJson(req.user.id);

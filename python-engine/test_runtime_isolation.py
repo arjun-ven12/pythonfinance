@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import runtime_state
 import openai_news_reasoner
@@ -85,29 +86,83 @@ class RuntimeIsolationTests(unittest.TestCase):
         self.assertFalse(user_a["allow_trade"])
         self.assertTrue(user_b["allow_trade"])
 
-    def test_openai_cache_is_partitioned_by_user_and_inputs(self):
+    def test_node_ai_cache_is_partitioned_by_user_and_inputs(self):
         openai_news_reasoner._SCAN_CACHE.clear()
+        news_events = [{"source": "test", "title": "Material update"}]
 
-        openai_news_reasoner.reason_about_news(
-            symbol="AAPL",
-            technical_signal="BUY",
-            confidence=80,
-            market_regime={"regime": "BULL"},
-            news_events=[],
-            user_id="user-a",
-            api_key="",
-        )
-        openai_news_reasoner.reason_about_news(
-            symbol="AAPL",
-            technical_signal="BUY",
-            confidence=80,
-            market_regime={"regime": "BULL"},
-            news_events=[],
-            user_id="user-b",
-            api_key="",
-        )
+        def fake_gateway(payload, user_id, timeout):
+            return {
+                "news_summary": f"{user_id} governed result",
+                "risk_level": "LOW",
+                "sentiment": "POSITIVE",
+                "confidence_adjustment": 2,
+                "allow_trade": True,
+                "reasoning": "Node AI gateway response.",
+            }
+
+        with patch.object(openai_news_reasoner, "request_node_ai_reasoning", fake_gateway):
+            openai_news_reasoner.reason_about_news(
+                symbol="AAPL",
+                technical_signal="BUY",
+                confidence=80,
+                market_regime={"regime": "BULL"},
+                news_events=news_events,
+                user_id="user-a",
+                api_key="ignored",
+            )
+            openai_news_reasoner.reason_about_news(
+                symbol="AAPL",
+                technical_signal="BUY",
+                confidence=80,
+                market_regime={"regime": "BULL"},
+                news_events=news_events,
+                user_id="user-b",
+                api_key="ignored",
+            )
 
         self.assertEqual(len(openai_news_reasoner._SCAN_CACHE), 2)
+
+    def test_node_ai_gateway_fallback_is_visible(self):
+        openai_news_reasoner._SCAN_CACHE.clear()
+
+        with patch.object(
+            openai_news_reasoner,
+            "request_node_ai_reasoning",
+            side_effect=RuntimeError("gateway down"),
+        ):
+            result = openai_news_reasoner.reason_about_news(
+                symbol="AAPL",
+                technical_signal="BUY",
+                confidence=80,
+                market_regime={"regime": "BULL"},
+                news_events=[{"source": "test", "title": "Material update"}],
+                user_id="user-a",
+            )
+
+        self.assertTrue(result["aiUnavailable"])
+        self.assertTrue(result["fallbackUsed"])
+        self.assertEqual(result["reason"], "gateway_unavailable")
+
+    def test_no_news_events_do_not_consume_ai_gateway_quota(self):
+        openai_news_reasoner._SCAN_CACHE.clear()
+
+        with patch.object(
+            openai_news_reasoner,
+            "request_node_ai_reasoning",
+        ) as gateway:
+            result = openai_news_reasoner.reason_about_news(
+                symbol="STX",
+                technical_signal="BUY",
+                confidence=80,
+                market_regime={"regime": "BULL"},
+                news_events=[],
+                user_id="user-a",
+            )
+
+        gateway.assert_not_called()
+        self.assertFalse(result["aiUnavailable"])
+        self.assertFalse(result["fallbackUsed"])
+        self.assertEqual(result["reason"], "no_news_events")
 
 
 if __name__ == "__main__":

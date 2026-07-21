@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import MatrixCopilotPanel from "./MatrixCopilotPanel";
 
 const METHOD_OPTIONS = [
   { value: "EQUAL_WEIGHT", label: "Equal weight" },
@@ -8,6 +9,15 @@ const METHOD_OPTIONS = [
   { value: "EVIDENCE_WEIGHTED", label: "Evidence weighted" },
   { value: "VOLATILITY_ADJUSTED", label: "Volatility adjusted" },
 ];
+
+const DEFAULT_GUARDRAILS = {
+  minimumTrades: 30,
+  minimumValidationScore: 55,
+  minimumRobustness: 60,
+  minimumWalkForwardStability: 55,
+  maxStrategyAllocationPct: 35,
+  maxSectorExposurePct: 45,
+};
 
 function toNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -85,6 +95,12 @@ function StatusBadge({ status }) {
   return <span className={`deployment-allocation-status deployment-allocation-status-${String(status || "").toLowerCase()}`}>{status}</span>;
 }
 
+function getReplayActiveRouteBars(result) {
+  return (result?.strategy_utilization || [])
+    .filter((item) => item.strategyKey && item.strategyKey !== "SIT_OUT")
+    .reduce((total, item) => total + Number(item.bars || 0), 0);
+}
+
 export default function StrategyDeploymentAllocation({
   dashboard,
   matrixReplayResult,
@@ -109,6 +125,7 @@ export default function StrategyDeploymentAllocation({
   const [matrixCells, setMatrixCells] = useState([]);
   const [rebalanceFrequency, setRebalanceFrequency] = useState("WEEKLY");
   const [maxDriftPct, setMaxDriftPct] = useState("5");
+  const [guardrails, setGuardrails] = useState(DEFAULT_GUARDRAILS);
   const [reasonNote, setReasonNote] = useState("");
 
   useEffect(() => {
@@ -120,6 +137,10 @@ export default function StrategyDeploymentAllocation({
     setMatrixCells(dashboard.matrix?.cells || []);
     setRebalanceFrequency(dashboard.rebalance?.frequency || "WEEKLY");
     setMaxDriftPct(String(dashboard.rebalance?.maxDriftPct ?? 5));
+    setGuardrails({
+      ...DEFAULT_GUARDRAILS,
+      ...(dashboard.guardrails?.config || {}),
+    });
     setReasonNote("");
   }, [dashboard]);
 
@@ -140,6 +161,25 @@ export default function StrategyDeploymentAllocation({
     () => new Map(strategies.map((strategy) => [strategy.experimentId, strategy])),
     [strategies]
   );
+
+  const matrixAssignmentsByExperimentId = useMemo(() => {
+    const assignments = new Map();
+    matrixCells.forEach((cell) => {
+      if (!cell.selectedExperimentId || String(cell.status || "").toUpperCase() === "SIT_OUT") {
+        return;
+      }
+      const current = assignments.get(cell.selectedExperimentId) || {
+        sectors: new Set(),
+        regimes: new Set(),
+        cells: 0,
+      };
+      current.sectors.add(cell.sector);
+      current.regimes.add(cell.regime);
+      current.cells += 1;
+      assignments.set(cell.selectedExperimentId, current);
+    });
+    return assignments;
+  }, [matrixCells]);
 
   const matrixRows = useMemo(() => {
     const sectors = dashboard?.matrix?.sectors || [];
@@ -210,6 +250,9 @@ export default function StrategyDeploymentAllocation({
     allocationMethod,
     strategies,
     matrix: { cells: matrixCells },
+    guardrails: Object.fromEntries(
+      Object.entries(guardrails).map(([key, value]) => [key, toNumber(value, DEFAULT_GUARDRAILS[key])])
+    ),
     rebalance: {
       frequency: rebalanceFrequency,
       maxDriftPct: toNumber(maxDriftPct, 5),
@@ -227,6 +270,7 @@ export default function StrategyDeploymentAllocation({
         allocationMethod,
         strategies,
         matrixCells,
+        guardrails,
         rebalanceFrequency,
         maxDriftPct: toNumber(maxDriftPct, 5),
       }) !==
@@ -234,6 +278,10 @@ export default function StrategyDeploymentAllocation({
         allocationMethod: dashboard.allocationMethod || "EQUAL_WEIGHT",
         strategies: dashboard.strategies || [],
         matrixCells: dashboard.matrix?.cells || [],
+        guardrails: {
+          ...DEFAULT_GUARDRAILS,
+          ...(dashboard.guardrails?.config || {}),
+        },
         rebalanceFrequency: dashboard.rebalance?.frequency || "WEEKLY",
         maxDriftPct: toNumber(dashboard.rebalance?.maxDriftPct, 5),
       })
@@ -241,6 +289,7 @@ export default function StrategyDeploymentAllocation({
   }, [
     allocationMethod,
     dashboard,
+    guardrails,
     matrixCells,
     maxDriftPct,
     rebalanceFrequency,
@@ -281,6 +330,8 @@ export default function StrategyDeploymentAllocation({
           </article>
         </div>
       </section>
+
+      <MatrixCopilotPanel />
 
       <div className="deployment-allocation-grid">
         <section className="strategy-lab-card">
@@ -350,8 +401,26 @@ export default function StrategyDeploymentAllocation({
                   <p>v{strategy.version || "-"}</p>
                 </div>
                 <div>
-                  <p>{strategy.routedRegimes?.map(shortenLabel).join(", ") || "No regimes"}</p>
-                  <p>{strategy.routedSectors?.map(shortenLabel).join(", ") || "No sectors"}</p>
+                  {(() => {
+                    const assignment = matrixAssignmentsByExperimentId.get(strategy.experimentId);
+                    const routedRegimes = assignment
+                      ? [...assignment.regimes].map(shortenLabel)
+                      : strategy.routedRegimes?.map(shortenLabel) || [];
+                    const routedSectors = assignment
+                      ? [...assignment.sectors].map(shortenLabel)
+                      : strategy.routedSectors?.map(shortenLabel) || [];
+                    return (
+                      <>
+                        <p>{routedRegimes.join(", ") || "No regimes"}</p>
+                        <p>{routedSectors.join(", ") || "No sectors"}</p>
+                        <p className="deployment-allocation-scope-note">
+                          {assignment
+                            ? `${assignment.cells} live cell${assignment.cells === 1 ? "" : "s"}`
+                            : "Envelope scope"}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div>
                   <p>Readiness {formatScore(strategy.readinessScore)}</p>
@@ -616,6 +685,13 @@ export default function StrategyDeploymentAllocation({
                   Deployment {matrixReplayResult.result.deploymentVersionId || "n/a"} replayed across{" "}
                   {Array.isArray(matrixReplayResult.result.symbols) ? matrixReplayResult.result.symbols.length : 0} symbols.
                 </p>
+                {Number(matrixReplayResult.result.completed_trades || 0) === 0 &&
+                getReplayActiveRouteBars(matrixReplayResult.result) > 0 ? (
+                  <p>
+                    Replay matched {getReplayActiveRouteBars(matrixReplayResult.result)} routed bar contexts,
+                    but the selected strategies did not emit any BUY signals for this universe and period.
+                  </p>
+                ) : null}
               </div>
             </>
           ) : (
@@ -631,16 +707,105 @@ export default function StrategyDeploymentAllocation({
             </div>
             <span>{dashboard.guardrails?.valid ? "All clear" : "Needs action"}</span>
           </div>
-          <div className="deployment-allocation-token-list">
-            <span className="strategy-library-chip strategy-library-chip-outline">
-              Min trades {dashboard.guardrails?.config?.minimumTrades}
-            </span>
-            <span className="strategy-library-chip strategy-library-chip-outline">
-              Min validation {dashboard.guardrails?.config?.minimumValidationScore}%
-            </span>
-            <span className="strategy-library-chip strategy-library-chip-outline">
-              Max sector {dashboard.guardrails?.config?.maxSectorExposurePct}%
-            </span>
+          <div className="deployment-allocation-guardrail-controls">
+            <label>
+              <span>Minimum trades</span>
+              <input
+                className="st-input"
+                min="0"
+                step="1"
+                type="number"
+                value={guardrails.minimumTrades}
+                onChange={(event) =>
+                  setGuardrails((current) => ({ ...current, minimumTrades: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              <span>Minimum validation %</span>
+              <input
+                className="st-input"
+                min="0"
+                max="100"
+                step="1"
+                type="number"
+                value={guardrails.minimumValidationScore}
+                onChange={(event) =>
+                  setGuardrails((current) => ({
+                    ...current,
+                    minimumValidationScore: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Minimum robustness %</span>
+              <input
+                className="st-input"
+                min="0"
+                max="100"
+                step="1"
+                type="number"
+                value={guardrails.minimumRobustness}
+                onChange={(event) =>
+                  setGuardrails((current) => ({
+                    ...current,
+                    minimumRobustness: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Minimum walk-forward %</span>
+              <input
+                className="st-input"
+                min="0"
+                max="100"
+                step="1"
+                type="number"
+                value={guardrails.minimumWalkForwardStability}
+                onChange={(event) =>
+                  setGuardrails((current) => ({
+                    ...current,
+                    minimumWalkForwardStability: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Max strategy allocation %</span>
+              <input
+                className="st-input"
+                min="0"
+                max="100"
+                step="0.5"
+                type="number"
+                value={guardrails.maxStrategyAllocationPct}
+                onChange={(event) =>
+                  setGuardrails((current) => ({
+                    ...current,
+                    maxStrategyAllocationPct: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Max sector exposure %</span>
+              <input
+                className="st-input"
+                min="0"
+                max="100"
+                step="0.5"
+                type="number"
+                value={guardrails.maxSectorExposurePct}
+                onChange={(event) =>
+                  setGuardrails((current) => ({
+                    ...current,
+                    maxSectorExposurePct: event.target.value,
+                  }))
+                }
+              />
+            </label>
           </div>
           {dashboard.guardrails?.violations?.length ? (
             <div className="deployment-allocation-violations">

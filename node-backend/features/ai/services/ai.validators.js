@@ -69,6 +69,13 @@ function validateSchema(schema, value, path = "$") {
           actual: typeof value,
         });
       }
+      if (Number.isInteger(schema.maxItems) && value.length > schema.maxItems) {
+        throw createAiValidationError(`AI response at ${path} exceeds maxItems ${schema.maxItems}.`, {
+          path,
+          maxItems: schema.maxItems,
+          actual: value.length,
+        });
+      }
       const itemSchema = schema.items || null;
       value.forEach((entry, index) => {
         validateSchema(itemSchema, entry, `${path}[${index}]`);
@@ -84,6 +91,13 @@ function validateSchema(schema, value, path = "$") {
           actual: typeof value,
         });
       }
+      if (Number.isInteger(schema.maxLength) && value.length > schema.maxLength) {
+        throw createAiValidationError(`AI response at ${path} exceeds maxLength ${schema.maxLength}.`, {
+          path,
+          maxLength: schema.maxLength,
+          actual: value.length,
+        });
+      }
       return;
 
     case "number":
@@ -92,6 +106,20 @@ function validateSchema(schema, value, path = "$") {
           path,
           expected: "number",
           actual: typeof value,
+        });
+      }
+      if (typeof schema.minimum === "number" && value < schema.minimum) {
+        throw createAiValidationError(`AI response at ${path} must be >= ${schema.minimum}.`, {
+          path,
+          minimum: schema.minimum,
+          actual: value,
+        });
+      }
+      if (typeof schema.maximum === "number" && value > schema.maximum) {
+        throw createAiValidationError(`AI response at ${path} must be <= ${schema.maximum}.`, {
+          path,
+          maximum: schema.maximum,
+          actual: value,
         });
       }
       return;

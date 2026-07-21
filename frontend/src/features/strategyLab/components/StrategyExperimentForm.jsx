@@ -63,6 +63,114 @@ const selectOptions = {
   ],
 };
 
+const RULE_INDICATORS = [
+  ["EMA_FAST", "EMA fast"],
+  ["EMA_SLOW", "EMA slow"],
+  ["RSI", "RSI"],
+  ["CLOSE", "Close price"],
+  ["VOLUME", "Volume"],
+  ["VOLUME_SMA_20", "Volume SMA"],
+  ["MACD", "MACD"],
+  ["ATR", "ATR"],
+  ["MOMENTUM", "Momentum"],
+  ["BREAKOUT_LEVEL", "Breakout level"],
+  ["VOLATILITY_20", "Volatility"],
+  ["PRICE_ABOVE_EMA", "Price above EMA"],
+  ["VOLUME_SPIKE", "Volume spike"],
+  ["BREAKOUT", "Breakout"],
+  ["SIGNAL_STATE", "Signal state"],
+  ["HOLDING_PERIOD_DAYS", "Holding period"],
+];
+
+const RULE_EXITS = [
+  ["STOP_LOSS", "Stop loss (ATR)"],
+  ["TAKE_PROFIT", "Take profit (ATR)"],
+  ["TRAILING_STOP", "Trailing stop (ATR)"],
+  ["TIME_EXIT", "Time exit"],
+  ["SIGNAL_EXIT", "Signal exit"],
+];
+
+const RULE_COMPARATORS = [
+  [">", "Greater than"],
+  [">=", "Greater than or equal"],
+  ["<", "Less than"],
+  ["<=", "Less than or equal"],
+  ["==", "Equals"],
+  ["!=", "Not equal"],
+  ["BETWEEN", "Between"],
+  ["CROSSES_ABOVE", "Crosses above"],
+  ["CROSSES_BELOW", "Crosses below"],
+  ["IS_TRUE", "Is true"],
+];
+
+const INDICATOR_DEFAULT_VALUE = {
+  EMA_FAST: "EMA(20)",
+  EMA_SLOW: "EMA(50)",
+  RSI: "RSI(14)",
+  CLOSE: "Close",
+  VOLUME: "Volume",
+  VOLUME_SMA_20: "SMA(Volume, 20)",
+  MACD: "MACD",
+  ATR: "ATR",
+  MOMENTUM: "Momentum",
+  BREAKOUT_LEVEL: "Breakout level",
+  VOLATILITY_20: "Volatility(20)",
+  PRICE_ABOVE_EMA: "Price above EMA",
+  VOLUME_SPIKE: "Volume spike",
+  BREAKOUT: "Breakout",
+  SIGNAL_STATE: "Signal state",
+  HOLDING_PERIOD_DAYS: "Holding period days",
+};
+
+function indicatorKeyFromValue(raw = "") {
+  const value = String(raw).trim().toUpperCase();
+  if (value.includes("VOLUME") && value.includes("SMA")) return "VOLUME_SMA_20";
+  if (value.includes("PRICE ABOVE EMA")) return "PRICE_ABOVE_EMA";
+  if (value.includes("VOLUME SPIKE")) return "VOLUME_SPIKE";
+  if (value.includes("EMA") && (value.includes("50") || value.includes("100") || value.includes("200") || value.includes("SLOW"))) return "EMA_SLOW";
+  if (value.includes("EMA")) return "EMA_FAST";
+  if (value.includes("RSI")) return "RSI";
+  if (value === "CLOSE" || value === "PRICE") return "CLOSE";
+  if (value === "VOLUME") return "VOLUME";
+  if (value.includes("MACD")) return "MACD";
+  if (value === "ATR") return "ATR";
+  if (value.includes("MOMENTUM")) return "MOMENTUM";
+  if (value.includes("BREAKOUT LEVEL") || value.includes("20-DAY HIGH")) return "BREAKOUT_LEVEL";
+  if (value.includes("VOLATILITY")) return "VOLATILITY_20";
+  if (value.includes("BREAKOUT")) return "BREAKOUT";
+  if (value.includes("SIGNAL")) return "SIGNAL_STATE";
+  if (value.includes("HOLDING") || value.includes("TIME EXIT")) return "HOLDING_PERIOD_DAYS";
+  return "";
+}
+
+function exitKeyFromValue(raw = "") {
+  const value = String(raw).trim().toUpperCase();
+  if (value.includes("TRAIL")) return "TRAILING_STOP";
+  if (value.includes("TAKE") && value.includes("PROFIT")) return "TAKE_PROFIT";
+  if (value.includes("STOP")) return "STOP_LOSS";
+  if (value.includes("TIME")) return "TIME_EXIT";
+  if (value.includes("SIGNAL")) return "SIGNAL_EXIT";
+  return "";
+}
+
+function exitValueFromKey(key) {
+  return {
+    STOP_LOSS: "Stop loss",
+    TAKE_PROFIT: "Take profit",
+    TRAILING_STOP: "ATR trailing stop",
+    TIME_EXIT: "Time exit",
+    SIGNAL_EXIT: "Signal exit",
+  }[key] || "Stop loss";
+}
+
+function getRuleParameter(indicatorKey, settings) {
+  if (indicatorKey === "EMA_FAST") return settings.emaFast || 20;
+  if (indicatorKey === "EMA_SLOW") return settings.emaSlow || 50;
+  if (indicatorKey === "RSI") return 14;
+  if (indicatorKey === "VOLUME_SMA_20" || indicatorKey === "VOLATILITY_20") return 20;
+  return null;
+}
+
 function getRules(settings) {
   return Array.isArray(settings.rules) && settings.rules.length > 0 ? settings.rules : [];
 }
@@ -157,6 +265,11 @@ export default function StrategyExperimentForm({
     rules[index] = { ...rules[index], [field]: value };
     updateSetting("rules", rules);
   };
+  const updateRuleFields = (index, changes) => {
+    const rules = [...getRules(form.settings)];
+    rules[index] = { ...rules[index], ...changes };
+    updateSetting("rules", rules);
+  };
   const addRule = () => {
     updateSetting("rules", [
       ...getRules(form.settings),
@@ -164,9 +277,9 @@ export default function StrategyExperimentForm({
         id: `rule-${Date.now()}`,
         group: "Signal",
         operator: "AND",
-        left: "Indicator",
+        left: "EMA(20)",
         comparator: ">",
-        right: "Threshold",
+        right: "EMA(50)",
         connector: "AND",
       },
     ]);
@@ -624,23 +737,228 @@ export default function StrategyExperimentForm({
             <h3>Rule builder</h3>
           </div>
           <div className="strategy-rule-builder">
-            {getRules(form.settings).map((rule, index) => (
-              <div className="strategy-rule-row" key={rule.id || index}>
-                <select value={rule.group || "Signal"} onChange={(event) => updateRule(index, "group", event.target.value)}>
-                  {STRATEGY_RULE_GROUPS.map((group) => <option key={group} value={group}>{group}</option>)}
-                </select>
-                <select value={rule.operator || "AND"} onChange={(event) => updateRule(index, "operator", event.target.value)}>
-                  {["WHEN", "AND", "OR", "NOT", "GROUP", "THEN"].map((operator) => <option key={operator} value={operator}>{operator}</option>)}
-                </select>
-                <input value={rule.left || ""} onChange={(event) => updateRule(index, "left", event.target.value)} />
-                <input value={rule.comparator || ""} onChange={(event) => updateRule(index, "comparator", event.target.value)} />
-                <input value={rule.right || ""} onChange={(event) => updateRule(index, "right", event.target.value)} />
-                <select value={rule.connector || "AND"} onChange={(event) => updateRule(index, "connector", event.target.value)}>
-                  {STRATEGY_RULE_CONNECTORS.map((connector) => <option key={connector} value={connector}>{connector}</option>)}
-                </select>
-                <button onClick={() => removeRule(index)} type="button">Remove</button>
-              </div>
-            ))}
+            {getRules(form.settings).map((rule, index) => {
+              const isExit = rule.group === "Exit";
+              const indicatorKey = indicatorKeyFromValue(rule.left);
+              const exitKey = exitKeyFromValue(rule.left);
+              const rightIndicatorKey = indicatorKeyFromValue(rule.right);
+              const comparator = String(rule.comparator || ">").toUpperCase();
+              const rightType = comparator === "IS_TRUE"
+                ? "boolean"
+                : rightIndicatorKey
+                  ? "indicator"
+                  : comparator === "BETWEEN"
+                    ? "range"
+                    : "value";
+              const rangeValues = String(rule.right || "").match(/-?\d+(\.\d+)?/g) || [];
+              const parameter = getRuleParameter(indicatorKey, form.settings);
+
+              return (
+                <div className="strategy-rule-row" key={rule.id || index}>
+                  <label>
+                    <span>Rule type</span>
+                    <select
+                      value={rule.group || "Signal"}
+                      onChange={(event) => {
+                        const group = event.target.value;
+                        updateRuleFields(index, group === "Exit"
+                          ? {
+                              group,
+                              left: "Stop loss",
+                              comparator: "=",
+                              right: form.settings.atrStopMultiple || 1.5,
+                              connector: "MANAGE",
+                            }
+                          : {
+                              group,
+                              left: "EMA(20)",
+                              comparator: ">",
+                              right: "EMA(50)",
+                              connector: "AND",
+                            });
+                      }}
+                    >
+                      {STRATEGY_RULE_GROUPS.map((group) => <option key={group} value={group}>{group}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Logic</span>
+                    <select value={rule.operator || "AND"} onChange={(event) => updateRule(index, "operator", event.target.value)}>
+                      {["WHEN", "AND", "OR", "NOT", "GROUP", "THEN"].map((operator) => <option key={operator} value={operator}>{operator}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{isExit ? "Exit rule" : "Indicator"}</span>
+                    <select
+                      value={isExit ? exitKey : indicatorKey}
+                      onChange={(event) => {
+                        if (isExit) {
+                          const nextExit = event.target.value;
+                          updateRuleFields(index, {
+                            left: exitValueFromKey(nextExit),
+                            comparator: "=",
+                            right:
+                              nextExit === "SIGNAL_EXIT"
+                                ? "SELL"
+                                : nextExit === "TIME_EXIT"
+                                  ? form.settings.holdingPeriodDays || 15
+                                  : nextExit === "TAKE_PROFIT"
+                                    ? form.settings.atrTakeProfitMultiple || 8
+                                    : nextExit === "TRAILING_STOP"
+                                      ? form.settings.trailingStopAtrMultiple || 2
+                                      : form.settings.atrStopMultiple || 1.5,
+                          });
+                          return;
+                        }
+                        updateRule(index, "left", INDICATOR_DEFAULT_VALUE[event.target.value]);
+                      }}
+                    >
+                      {!isExit && !indicatorKey && <option value="">Select indicator</option>}
+                      {(isExit ? RULE_EXITS : RULE_INDICATORS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {!isExit && (
+                    <label>
+                      <span>Parameter</span>
+                      <input
+                        disabled={parameter === null || !["EMA_FAST", "EMA_SLOW"].includes(indicatorKey)}
+                        min="1"
+                        step="1"
+                        type="number"
+                        value={parameter ?? ""}
+                        onChange={(event) =>
+                          updateSetting(
+                            indicatorKey === "EMA_FAST" ? "emaFast" : "emaSlow",
+                            event.target.value
+                          )
+                        }
+                      />
+                    </label>
+                  )}
+                  {!isExit && (
+                    <label>
+                      <span>Comparator</span>
+                      <select
+                        value={comparator}
+                        onChange={(event) => {
+                          const nextComparator = event.target.value;
+                          updateRuleFields(index, {
+                            comparator: nextComparator,
+                            right:
+                              nextComparator === "BETWEEN"
+                                ? "40 and 70"
+                                : nextComparator === "IS_TRUE"
+                                  ? "true"
+                                  : rule.right,
+                          });
+                        }}
+                      >
+                        {RULE_COMPARATORS.map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {!isExit && comparator !== "IS_TRUE" && comparator !== "BETWEEN" && (
+                    <label>
+                      <span>Compare with</span>
+                      <select
+                        value={rightType === "indicator" ? "indicator" : "value"}
+                        onChange={(event) =>
+                          updateRule(
+                            index,
+                            "right",
+                            event.target.value === "indicator" ? "EMA(50)" : "0"
+                          )
+                        }
+                      >
+                        <option value="indicator">Indicator</option>
+                        <option value="value">Number</option>
+                      </select>
+                    </label>
+                  )}
+                  {!isExit && rightType === "indicator" && (
+                    <label>
+                      <span>Right indicator</span>
+                      <select
+                        value={rightIndicatorKey}
+                        onChange={(event) =>
+                          updateRule(index, "right", INDICATOR_DEFAULT_VALUE[event.target.value])
+                        }
+                      >
+                        {RULE_INDICATORS.map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {!isExit && rightType === "value" && (
+                    <label>
+                      <span>Value</span>
+                      <input
+                        step="any"
+                        type="number"
+                        value={rule.right ?? ""}
+                        onChange={(event) => updateRule(index, "right", event.target.value)}
+                      />
+                    </label>
+                  )}
+                  {!isExit && rightType === "range" && (
+                    <div className="strategy-rule-range">
+                      <label>
+                        <span>Minimum</span>
+                        <input
+                          step="any"
+                          type="number"
+                          value={rangeValues[0] || ""}
+                          onChange={(event) =>
+                            updateRule(index, "right", `${event.target.value} and ${rangeValues[1] || 70}`)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Maximum</span>
+                        <input
+                          step="any"
+                          type="number"
+                          value={rangeValues[1] || ""}
+                          onChange={(event) =>
+                            updateRule(index, "right", `${rangeValues[0] || 40} and ${event.target.value}`)
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {isExit && (
+                    <label>
+                      <span>{exitKey === "SIGNAL_EXIT" ? "Signal" : exitKey === "TIME_EXIT" ? "Days" : "ATR multiple"}</span>
+                      {exitKey === "SIGNAL_EXIT" ? (
+                        <select value="SELL" disabled>
+                          <option value="SELL">SELL</option>
+                        </select>
+                      ) : (
+                        <input
+                          min="0"
+                          step={exitKey === "TIME_EXIT" ? "1" : "0.1"}
+                          type="number"
+                          value={rule.right ?? ""}
+                          onChange={(event) => updateRule(index, "right", event.target.value)}
+                        />
+                      )}
+                    </label>
+                  )}
+                  <label>
+                    <span>Connector</span>
+                    <select value={rule.connector || "AND"} onChange={(event) => updateRule(index, "connector", event.target.value)}>
+                      {STRATEGY_RULE_CONNECTORS.map((connector) => <option key={connector} value={connector}>{connector}</option>)}
+                    </select>
+                  </label>
+                  <button onClick={() => removeRule(index)} type="button">Remove</button>
+                </div>
+              );
+            })}
             <button className="strategy-secondary-action" onClick={addRule} type="button">Add Rule</button>
           </div>
         </div>
@@ -744,8 +1062,8 @@ export default function StrategyExperimentForm({
                 value={form.settings.strategyPrompt || ""}
               />
               <p>
-                Stores research intent for ideation only. The generated strategy representation is
-                shown in AI Transparency below, and it never deploys automatically.
+                Stores research intent for ideation only. The generated execution contract is
+                shown in Strategy Transparency below, and it never deploys automatically.
               </p>
             </article>
           </div>

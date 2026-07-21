@@ -186,7 +186,7 @@ class MatrixReplayTests(unittest.TestCase):
             "status": "ACTIVE",
         }]
 
-        def signal(row, strategy_config=None, _context=None):
+        def signal(row, strategy_config=None, context=None):
             if row["date"] == make_prices().iloc[50]["date"]:
                 return {"signal": "BUY", "confidence": 80, "reasons": ["route"]}
             return {"signal": "HOLD", "confidence": 10, "reasons": []}
@@ -209,7 +209,7 @@ class MatrixReplayTests(unittest.TestCase):
             "status": "ACTIVE",
         }]
 
-        def signal(row, strategy_config=None, _context=None):
+        def signal(row, strategy_config=None, context=None):
             if row["date"] == make_prices().iloc[50]["date"]:
                 return {"signal": "BUY", "confidence": 80, "reasons": ["route"]}
             return {"signal": "HOLD", "confidence": 10, "reasons": []}
@@ -225,6 +225,61 @@ class MatrixReplayTests(unittest.TestCase):
         self.assertEqual(trade["deploymentVersion"], "deployment-1")
         self.assertEqual(trade["sector"], "Technology")
         self.assertEqual(trade["regime"], "BULL_LOW_VOL")
+
+    def test_sector_aliases_route_to_saved_matrix_cell(self):
+        strategies = [build_strategy("ver1", "Bull Strategy")]
+        matrix_cells = [{
+            "key": "Technology::BULL_LOW_VOL",
+            "sector": "Technology",
+            "regime": "BULL_LOW_VOL",
+            "selectedExperimentId": "exp1",
+            "selectedStrategyVersionId": "ver1",
+            "allocationPct": 50,
+            "status": "ACTIVE",
+        }]
+
+        def signal(row, strategy_config=None, context=None):
+            if row["date"] == make_prices().iloc[50]["date"]:
+                return {"signal": "BUY", "confidence": 80, "reasons": ["route"]}
+            return {"signal": "HOLD", "confidence": 10, "reasons": []}
+
+        prices = make_prices()
+
+        def load_prices(symbol, **_kwargs):
+            return prices.copy()
+
+        with (
+            patch.object(matrix_replay, "get_historical_data", side_effect=load_prices),
+            patch.object(matrix_replay, "add_indicators", side_effect=lambda frame, _config=None: frame),
+            patch.object(matrix_replay, "get_symbol_metadata", return_value={
+                "sector": "Information Technology",
+                "industry": "Software",
+                "company_name": "Test",
+                "is_us": True,
+                "is_sgx": False,
+            }),
+            patch.object(matrix_replay, "generate_research_signal_from_row", side_effect=signal),
+            patch.object(matrix_replay, "determine_position_size", return_value=(1000, False)),
+            patch.object(matrix_replay, "evaluate_long_intraday_exit", return_value=(False, None, None)),
+        ):
+            result = matrix_replay.run_matrix_replay(
+                {
+                    "deployment": {
+                        "deploymentSetId": "deployment-1",
+                        "deploymentVersionId": "deployment-1",
+                        "matrix": {
+                            "cells": matrix_cells,
+                        },
+                    },
+                    "strategies": strategies,
+                    "symbols": ["AAPL"],
+                    "period": "2y",
+                    "initialCash": 100000,
+                }
+            )
+
+        self.assertEqual(result["completed_trades"], 1)
+        self.assertEqual(result["routing_events"][0]["matrixCell"], "Technology::BULL_LOW_VOL")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatNumber } from "../../utils/numberFormat";
 
 function ChartPanel({ children, title, subtitle, hasData = true }) {
   return (
@@ -29,7 +30,7 @@ function formatValidationValue(value, suffix = "") {
     return "-";
   }
 
-  return `${number.toFixed(2)}${suffix}`;
+  return `${formatNumber(number)}${suffix}`;
 }
 
 function ValidationGroupTable({ rows = [], title }) {

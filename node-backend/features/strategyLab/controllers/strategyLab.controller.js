@@ -5,11 +5,17 @@ function createStrategyLabController({
   buildStrategyExperimentCreateData,
   buildStrategyExperimentUpdateData,
   buildStrategyRunData,
+  compareStrategiesCopilot,
   computeDeploymentReadiness,
   activateStrategyVersion,
+  answerStrategyQuestion,
+  answerResearchQuestion,
   assignStrategyToActiveSet,
+  compareStrategyVersions,
   createStrategyVersion,
   deactivateStrategyDeployment,
+  explainStrategy,
+  generateResearchReport,
   getActiveSetState,
   getStrategyValidationAggregate,
   getStrategyLifecycleDashboard,
@@ -18,9 +24,12 @@ function createStrategyLabController({
   getStrategyLeaderboard,
   getStrategyMemory,
   getDeploymentAllocationDashboard,
+  generateStrategyDraft,
   computeLifecycleReadiness,
+  proposeStrategyEdit,
   removeStrategyFromActiveSet,
   resolveCanonicalDeploymentState,
+  reviewStrategy,
   statusFromReadiness,
   persistStrategyRunTrades,
   persistMarketRegimeSnapshots,
@@ -35,6 +44,10 @@ function createStrategyLabController({
   runStrategyRobustness,
   runStrategyPreview,
   runMatrixReplay,
+  matrixCopilotService,
+  matrixAdvisorService,
+  matrixProposalService,
+  memoryIngestionService,
   runWalkForward,
   sanitizeBacktestConfig,
   simulateStrategyPortfolio: runStrategyPortfolioSimulation,
@@ -47,6 +60,27 @@ function createStrategyLabController({
       ? strategyStorage.hydrateStrategyExperimentRecord(experiment)
       : experiment;
   const hydrateExperiments = (experiments = []) => experiments.map(hydrateExperiment);
+  const findStrategyForCopilot = async (userId, experimentId) => {
+    const experimentRecord = await prisma.run((db) =>
+      db.strategyExperiment.findFirst({
+        where: {
+          id: String(experimentId),
+          userId,
+        },
+        include: {
+          runs: {
+            orderBy: { createdAt: "desc" },
+            take: 3,
+          },
+          versions: {
+            orderBy: { version: "desc" },
+            take: 10,
+          },
+        },
+      })
+    );
+    return hydrateExperiment(experimentRecord);
+  };
 
   return {
     async listExperiments(req, res) {
@@ -160,6 +194,7 @@ function createStrategyLabController({
         const requestedVersionId = req.body?.strategyVersionId || req.body?.versionId || null;
 
         if (!experimentId) {
+          const previous = await prisma.run((db) => db.strategyVersion.findFirst({ where: { userId: req.user.id, deploymentStatus: "ACTIVE" }, include: { experiment: { select: { name: true } } }, orderBy: { activatedAt: "desc" } }));
           const activeStrategy = await deactivateStrategyDeployment({
             prisma,
             userId: req.user.id,
@@ -179,6 +214,7 @@ function createStrategyLabController({
               readActiveStrategyConfig,
             }),
           ]);
+          if (previous && memoryIngestionService) { const { strategyDeactivatedEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordFromStrategy(strategyDeactivatedEvent({ ...previous, strategyName: previous.experiment?.name })); }
           res.json({
             ...activeStrategy,
             deployment,
@@ -221,6 +257,7 @@ function createStrategyLabController({
             experiment.versions?.find((version) => version.id === requestedVersionId)) ||
           evidence.targetVersion ||
           evidence.latestVersion;
+        const previousActiveVersion = experiment.versions?.find((version) => version.deploymentStatus === "ACTIVE") || null;
         if (requestedVersionId && !targetVersion) {
           res.status(404).json({ error: "Requested strategy version not found." });
           return;
@@ -240,6 +277,14 @@ function createStrategyLabController({
         });
 
         if (!readiness.canActivate) {
+          if (targetVersion && memoryIngestionService) {
+            const { strategyValidationEvent } = require("../../memory/services/memoryEvents");
+            await memoryIngestionService.recordFromStrategy(strategyValidationEvent(
+              { ...targetVersion, userId: req.user.id },
+              false,
+              { strategyName: experiment.name, deploymentBlocked: true, failureCodes: readiness.reasons || readiness.blockers || [], readinessScore: readiness.score }
+            ));
+          }
           res.status(400).json({
             error: "Strategy is not ready for activation.",
             readiness,
@@ -264,6 +309,18 @@ function createStrategyLabController({
           readiness,
           writeActiveStrategyConfig,
         });
+        if (memoryIngestionService) {
+          const { strategyRollbackEvent, strategyValidationEvent, strategyVersionEvent } = require("../../memory/services/memoryEvents");
+          await memoryIngestionService.recordFromStrategy(strategyValidationEvent({ ...activeVersion, userId: req.user.id }, true, { strategyName: experiment.name, readinessScore: readiness.score }));
+          await memoryIngestionService.recordFromStrategy(strategyVersionEvent({ ...activeVersion, userId: req.user.id, deploymentStatus: "ACTIVE", activatedAt: new Date() }, experiment.name));
+          if (previousActiveVersion && previousActiveVersion.id !== activeVersion.id && previousActiveVersion.version > activeVersion.version) {
+            await memoryIngestionService.recordFromStrategy(strategyRollbackEvent(
+              { ...activeVersion, userId: req.user.id },
+              previousActiveVersion,
+              { strategyName: experiment.name, reason: req.body?.reason || "User selected an earlier validated version" }
+            ));
+          }
+        }
 
         const activeSet = await getActiveSetState({
           prisma,
@@ -360,6 +417,13 @@ function createStrategyLabController({
           await createStrategyVersion(db, req.user.id, created, "Initial strategy version");
           return hydrateExperiment(created);
         });
+
+        if (memoryIngestionService) {
+          const { strategyCreatedEvent, strategyVersionEvent } = require("../../memory/services/memoryEvents");
+          await memoryIngestionService.recordFromStrategy(strategyCreatedEvent(experiment));
+          const version = await prisma.run((db) => db.strategyVersion.findFirst({ where: { userId: req.user.id, experimentId: experiment.id }, orderBy: { version: "desc" } }));
+          if (version) await memoryIngestionService.recordFromStrategy(strategyVersionEvent(version, experiment.name));
+        }
 
         res.status(201).json(experiment);
       } catch (error) {
@@ -514,6 +578,441 @@ function createStrategyLabController({
       }
     },
 
+    async generateStrategyDraft(req, res) {
+      try {
+        res.json(await generateStrategyDraft(req.user.id, req.body || {}));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async explainStrategy(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        if (!experimentId) {
+          res.status(400).json({ error: "experimentId is required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        res.json(await explainStrategy(req.user.id, experiment));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async reviewStrategy(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        if (!experimentId) {
+          res.status(400).json({ error: "experimentId is required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        res.json(await reviewStrategy(req.user.id, experiment));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async askStrategyQuestion(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        const question = String(req.body?.question || "").trim();
+        if (!experimentId || !question) {
+          res.status(400).json({ error: "experimentId and question are required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        res.json(await answerStrategyQuestion(req.user.id, experiment, question));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async proposeStrategyEdit(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        const prompt = String(req.body?.prompt || "").trim();
+        if (!experimentId || !prompt) {
+          res.status(400).json({ error: "experimentId and prompt are required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        const proposal = await proposeStrategyEdit(req.user.id, experiment, prompt);
+        if (memoryIngestionService && proposal?.status === "READY") {
+          const { hash } = require("../../memory/services/memoryPolicy");
+          const { strategyEditDecisionEvent } = require("../../memory/services/memoryEvents");
+          await memoryIngestionService.recordFromStrategy(strategyEditDecisionEvent(
+            { ...experiment, userId: req.user.id },
+            "STRATEGY_EDIT_PROPOSED",
+            {
+              summary: proposal.review?.summary || proposal.review?.recommendation || "AI-assisted strategy edit",
+              reason: prompt,
+              contractHash: hash(proposal.draft?.after?.settings?.strategyJson || proposal.draft?.after?.settings || {}),
+              parentVersionId: experiment.versions?.[0]?.id || null,
+              diffSummary: proposal.diff?.summary || null,
+            }
+          ));
+        }
+        res.json(proposal);
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async approveStrategyEdit(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        if (!experimentId) {
+          res.status(400).json({ error: "experimentId is required." });
+          return;
+        }
+
+        const existingExperimentRecord = await prisma.run((db) =>
+          db.strategyExperiment.findFirst({
+            where: {
+              id: experimentId,
+              userId: req.user.id,
+            },
+            include: {
+              versions: {
+                orderBy: { version: "desc" },
+                take: 5,
+              },
+            },
+          })
+        );
+        const existingExperiment = hydrateExperiment(existingExperimentRecord);
+
+        if (!existingExperiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        const proposedForm = req.body?.proposedForm || req.body?.draft?.after;
+        if (!proposedForm?.settings) {
+          res.status(400).json({ error: "proposedForm.settings is required." });
+          return;
+        }
+
+        const updateData = buildStrategyExperimentUpdateData(
+          {
+            name: proposedForm.name ?? existingExperiment.name,
+            description: proposedForm.description ?? existingExperiment.description,
+            status: proposedForm.status ?? existingExperiment.status,
+            settings: proposedForm.settings,
+          },
+          existingExperiment
+        );
+        const reason = String(req.body?.reason || req.body?.review?.reason || "AI strategy edit").trim();
+        const summary = String(req.body?.summary || req.body?.review?.summaryOfChanges || "Approved AI strategy edit").trim();
+        const changeNote = `${reason}: ${summary}`.slice(0, 240);
+        const { hash: hashMemoryContent } = require("../../memory/services/memoryPolicy");
+        const contractHash = hashMemoryContent(proposedForm.settings?.strategyJson || proposedForm.settings);
+
+        const result = await prisma.run(async (db) => {
+          const encryptedData = strategyStorage.encryptExperimentForStorage({
+            id: existingExperiment.id,
+            userId: req.user.id,
+            name: updateData.name ?? existingExperiment.name,
+            description:
+              updateData.description !== undefined
+                ? updateData.description
+                : existingExperiment.description,
+            status: updateData.status ?? existingExperiment.status,
+            settingsJson: updateData.settingsJson ?? existingExperiment.settingsJson,
+          });
+
+          const updated = await db.strategyExperiment.updateMany({
+            where: {
+              id: existingExperiment.id,
+              userId: req.user.id,
+            },
+            data: {
+              name: encryptedData.name,
+              description: encryptedData.description,
+              status: encryptedData.status,
+              settingsJson: encryptedData.settingsJson,
+              encryptedStrategy: encryptedData.encryptedStrategy,
+              encryptedStrategyKey: encryptedData.encryptedStrategyKey,
+              strategyEncryptionIv: encryptedData.strategyEncryptionIv,
+              strategyEncryptionTag: encryptedData.strategyEncryptionTag,
+              strategyEncryptionKeyIv: encryptedData.strategyEncryptionKeyIv,
+              strategyEncryptionKeyTag: encryptedData.strategyEncryptionKeyTag,
+              strategyEncryptionAlgorithmVersion:
+                encryptedData.strategyEncryptionAlgorithmVersion,
+            },
+          });
+
+          if (updated.count !== 1) {
+            return null;
+          }
+
+          const nextExperimentRecord = await db.strategyExperiment.findFirst({
+            where: { id: existingExperiment.id, userId: req.user.id },
+            include: {
+              versions: {
+                orderBy: { version: "desc" },
+                take: 10,
+              },
+            },
+          });
+          const nextExperiment = hydrateExperiment(nextExperimentRecord);
+          const latestVersion = existingExperiment.versions?.[0] || null;
+          const version = await createStrategyVersion(
+            db,
+            req.user.id,
+            nextExperiment,
+            changeNote,
+            {
+              evidenceJson: {
+                aiEdit: {
+                  generated: true,
+                  approvedByUserId: req.user.id,
+                  reason,
+                  summary,
+                  contractHash,
+                  parentVersionId: latestVersion?.id || null,
+                  parentVersion: latestVersion?.version || null,
+                },
+              },
+            }
+          );
+
+          return {
+            experiment: nextExperiment,
+            version,
+          };
+        });
+
+        if (result?.version && memoryIngestionService) {
+          const { strategyEditDecisionEvent, strategyVersionEvent } = require("../../memory/services/memoryEvents");
+          await memoryIngestionService.recordFromStrategy(strategyEditDecisionEvent(
+            result.version,
+            "STRATEGY_EDIT_APPROVED",
+            {
+              strategyName: result.experiment?.name,
+              reason,
+              summary,
+              contractHash,
+              parentVersionId: result.version.evidenceJson?.aiEdit?.parentVersionId || existingExperiment.versions?.[0]?.id || null,
+            }
+          ));
+          await memoryIngestionService.recordFromStrategy(strategyVersionEvent(result.version, result.experiment?.name));
+        }
+        res.json(result);
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async compareStrategiesCopilot(req, res) {
+      try {
+        const leftExperimentId = getStrategyExperimentId(req.body || {}, [
+          "leftExperimentId",
+          "leftId",
+        ]);
+        const rightExperimentId = getStrategyExperimentId(req.body || {}, [
+          "rightExperimentId",
+          "rightId",
+        ]);
+
+        if (!leftExperimentId || !rightExperimentId) {
+          res.status(400).json({
+            error: "leftExperimentId and rightExperimentId are required.",
+          });
+          return;
+        }
+
+        const [leftExperiment, rightExperiment] = await Promise.all([
+          findStrategyForCopilot(req.user.id, leftExperimentId),
+          findStrategyForCopilot(req.user.id, rightExperimentId),
+        ]);
+
+        if (!leftExperiment || !rightExperiment) {
+          res.status(404).json({ error: "One or both strategy experiments were not found." });
+          return;
+        }
+
+        res.json(await compareStrategiesCopilot(req.user.id, leftExperiment, rightExperiment));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async generateStrategyResearchReport(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        if (!experimentId) {
+          res.status(400).json({ error: "experimentId is required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        const lifecycle = await getStrategyLifecycleDashboard(prisma, req.user.id);
+        const memory = await getStrategyMemory({ userId: req.user.id, experimentId });
+        const extras = {
+          lifecycle:
+            lifecycle?.strategies?.find((item) => item.experimentId === experimentId) || null,
+          memory,
+          matrixReplay: req.body?.matrixReplay || null,
+          portfolioSimulation: req.body?.portfolioSimulation || null,
+          regimeAnalysis: req.body?.regimeAnalysis || null,
+          walkForwardResult: req.body?.walkForwardResult || null,
+          stressResult: req.body?.stressResult || null,
+          robustnessResult: req.body?.robustnessResult || null,
+        };
+
+        res.json(await generateResearchReport(req.user.id, experiment, extras));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async answerStrategyResearchQuestion(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        const question = String(req.body?.question || "").trim();
+        if (!experimentId || !question) {
+          res.status(400).json({ error: "experimentId and question are required." });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        const lifecycle = await getStrategyLifecycleDashboard(prisma, req.user.id);
+        const memory = await getStrategyMemory({ userId: req.user.id, experimentId });
+        const extras = {
+          lifecycle:
+            lifecycle?.strategies?.find((item) => item.experimentId === experimentId) || null,
+          memory,
+          matrixReplay: req.body?.matrixReplay || null,
+          portfolioSimulation: req.body?.portfolioSimulation || null,
+          regimeAnalysis: req.body?.regimeAnalysis || null,
+          walkForwardResult: req.body?.walkForwardResult || null,
+          stressResult: req.body?.stressResult || null,
+          robustnessResult: req.body?.robustnessResult || null,
+        };
+
+        res.json(await answerResearchQuestion(req.user.id, experiment, question, extras));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
+    async compareStrategyVersions(req, res) {
+      try {
+        const experimentId = getStrategyExperimentId(req.body || {}, ["experimentId", "id"]);
+        const leftVersionId = String(req.body?.leftVersionId || "").trim();
+        const rightVersionId = String(req.body?.rightVersionId || "").trim();
+
+        if (!experimentId || !leftVersionId || !rightVersionId) {
+          res.status(400).json({
+            error: "experimentId, leftVersionId, and rightVersionId are required.",
+          });
+          return;
+        }
+
+        const experiment = await findStrategyForCopilot(req.user.id, experimentId);
+        if (!experiment) {
+          res.status(404).json({ error: "Strategy experiment not found." });
+          return;
+        }
+
+        const leftVersion = experiment.versions?.find((item) => item.id === leftVersionId) || null;
+        const rightVersion = experiment.versions?.find((item) => item.id === rightVersionId) || null;
+
+        if (!leftVersion || !rightVersion) {
+          res.status(404).json({ error: "One or both strategy versions were not found." });
+          return;
+        }
+
+        const [leftValidation, rightValidation] = await Promise.all([
+          getStrategyValidationAggregate(prisma, req.user.id, {
+            strategyVersionId: leftVersion.id,
+            strategyId: experiment.id,
+          }),
+          getStrategyValidationAggregate(prisma, req.user.id, {
+            strategyVersionId: rightVersion.id,
+            strategyId: experiment.id,
+          }),
+        ]);
+
+        res.json(await compareStrategyVersions(
+          req.user.id,
+          experiment,
+          leftVersion,
+          rightVersion,
+          { leftValidation, rightValidation }
+        ));
+      } catch (error) {
+        res.status(error.statusCode || 400).json({
+          error: error.message,
+          details: error.details,
+        });
+      }
+    },
+
     async runExperiment(req, res) {
       try {
         const experimentRecord = await prisma.run((db) =>
@@ -556,6 +1055,7 @@ function createStrategyLabController({
         );
         await persistStrategyRunTrades(run.id, backtestOutput);
         await persistMarketRegimeSnapshots(req.user.id, config.symbol, backtestOutput);
+        if (memoryIngestionService) { const { backtestEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordFromResearch(backtestEvent(run, experiment.name)); }
 
         res.status(201).json({
           experiment,
@@ -702,7 +1202,7 @@ function createStrategyLabController({
             robustness,
             deploymentReadiness: robustness.deploymentReadiness,
           };
-          const updated = await prisma.run(async (db) => {
+        const updated = await prisma.run(async (db) => {
             const encryptedData = strategyStorage.encryptExperimentForStorage({
               id: experiment.id,
               userId: req.user.id,
@@ -733,6 +1233,10 @@ function createStrategyLabController({
           await createStrategyVersion(db, req.user.id, nextExperiment, "Robustness test");
           return nextExperiment;
         });
+        if (memoryIngestionService) {
+          const version = await prisma.run((db) => db.strategyVersion.findFirst({ where: { userId: req.user.id, experimentId: experiment.id }, orderBy: { version: "desc" } }));
+          if (version) { const { robustnessEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordFromResearch(robustnessEvent(version, experiment.name, robustness)); }
+        }
 
         res.json({ robustness, experiment: updated });
       } catch (error) {
@@ -762,6 +1266,7 @@ function createStrategyLabController({
           experiment,
           body: await resolveBacktestUniversePayload(req.user.id, req.body || {}),
         });
+        if (memoryIngestionService && result.walkForwardRun) { const { walkForwardEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordFromResearch(walkForwardEvent(result.walkForwardRun, experiment.name)); }
 
         res.status(201).json(result);
       } catch (error) {
@@ -788,11 +1293,16 @@ function createStrategyLabController({
 
     async runStressTest(req, res) {
       try {
-        res.status(201).json(await runMonteCarloStress({
+        const result = await runMonteCarloStress({
           userId: req.user.id,
           experimentId: req.params.id,
           body: req.body || {},
-        }));
+        });
+        if (memoryIngestionService && result.stressResult) {
+          const experiment = await prisma.run((db) => db.strategyExperiment.findFirst({ where: { id: req.params.id, userId: req.user.id }, select: { name: true } }));
+          const { monteCarloEvent } = require("../../memory/services/memoryEvents"); await memoryIngestionService.recordFromResearch(monteCarloEvent(result.stressResult, experiment?.name || "Strategy"));
+        }
+        res.status(201).json(result);
       } catch (error) {
         res.status(error.statusCode || 400).json({
           error: error.message,
@@ -849,10 +1359,12 @@ function createStrategyLabController({
     async runMatrixReplay(req, res) {
       try {
         const resolvedBody = await resolveBacktestUniversePayload(req.user.id, req.body || {});
-        res.json(await runMatrixReplay({
+        const result = await runMatrixReplay({
           userId: req.user.id,
           body: resolvedBody,
-        }));
+        });
+        await matrixCopilotService?.recordReplay(req.user.id, resolvedBody, result).catch(() => null);
+        res.json(result);
       } catch (error) {
         res.status(error.statusCode || 400).json({
           error: error.message,
@@ -860,6 +1372,23 @@ function createStrategyLabController({
         });
       }
     },
+
+    async matrixCopilot(req, res) {
+      try { res.json(await matrixCopilotService.run(req.user.id, req.body || {})); }
+      catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); }
+    },
+    async matrixRecommendation(req, res) { try { res.json(await matrixAdvisorService.recommend(req.user.id, req.body || {})); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } },
+    async matrixScenario(req, res) { try { res.json(await matrixAdvisorService.scenario(req.user.id, req.body || {})); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } },
+    async matrixAlternativeComparison(req, res) { try { res.json(await matrixAdvisorService.compare(req.user.id, req.body || {})); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } },
+    async listMatrixProposals(req, res) { try { res.json({ proposals: await matrixProposalService.list(req.user.id, { includeDeleted: req.query?.includeDeleted === "true" }) }); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async getMatrixProposal(req, res) { try { res.json(await matrixProposalService.get(req.user.id, req.params.id)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async saveMatrixProposal(req, res) { try { res.status(201).json(await matrixProposalService.save(req.user.id, req.body || {})); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } },
+    async renameMatrixProposal(req, res) { try { res.json(await matrixProposalService.rename(req.user.id, req.params.id, req.body?.title)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async duplicateMatrixProposal(req, res) { try { res.status(201).json(await matrixProposalService.duplicate(req.user.id, req.params.id)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async deleteMatrixProposal(req, res) { try { res.json(await matrixProposalService.remove(req.user.id, req.params.id)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async restoreMatrixProposal(req, res) { try { res.json(await matrixProposalService.restore(req.user.id, req.params.id)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async rejectMatrixProposal(req, res) { try { res.json(await matrixProposalService.reject(req.user.id, req.params.id, req.body?.reason)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message }); } },
+    async approveMatrixProposal(req, res) { try { res.json(await matrixProposalService.approve(req.user.id, req.params.id, req.body?.reason)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } },
 
     async getDeploymentAllocationDashboard(req, res) {
       try {

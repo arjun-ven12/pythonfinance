@@ -285,3 +285,58 @@ test("active strategy resolution prefers canonical deployment set ownership", as
     /stored active_strategy metadata differs/i
   );
 });
+
+test("persisted running schedulers are restored after a process restart", async () => {
+  const schedulerControllers = new Map();
+  let persistedStatus = {
+    is_running: true,
+    scheduler_config: {
+      interval: "15min",
+      limit: 50,
+      riskMultiplier: 1,
+      marketHoursOnly: true,
+      horizon: "SWING",
+      symbols: [],
+    },
+  };
+  const service = createEngineRuntimeService({
+    getDefaultExecutionSettings: () => ({ execution_mode: "FULL_AUTOMATION" }),
+    getDefaultMarketUniverseSettings: () => ({ market: "US" }),
+    getExecutionSettingsFromRequest: (_body, current) => current,
+    getMarketUniverseSettingsFromRequest: (_body, current) => current,
+    getPlaybookSourceData: async () => ({}),
+    getPortfolioForUser: async () => ({ ledgerState: {} }),
+    getPythonPath: () => "python3",
+    getRequestedScanSymbols: async () => [],
+    getRiskMultiplier: () => 1,
+    getScanLimit: () => 50,
+    getTradingHorizon: () => "SWING",
+    normalizeScanMetadata: (value) => value,
+    parseScanArtifacts: () => ({}),
+    persistCompletedScan: async () => ({}),
+    prisma: {
+      run: async (operation) => operation({
+        engineStatus: {
+          findMany: async () => [{ userId: "user-1", status: persistedStatus }],
+          findUnique: async () => ({ status: persistedStatus }),
+          upsert: async ({ update }) => {
+            persistedStatus = update.status;
+            return { status: persistedStatus };
+          },
+        },
+      }),
+    },
+    pythonEngineDir: "",
+    readUserSetting: async (_userId, key, fallback) =>
+      key === "execution_settings" ? { execution_mode: "FULL_AUTOMATION" } : fallback,
+    scanJobService: { startJob: async () => ({ id: "job-1" }) },
+    scannerPath: "scanner.py",
+    schedulerControllers,
+    syncPlaybook: async () => ({}),
+    writeUserSetting: async () => ({}),
+  });
+
+  assert.equal(await service.recoverSchedulers(), 1);
+  assert.equal(schedulerControllers.has("user-1"), true);
+  service.stopUserScheduler("user-1");
+});

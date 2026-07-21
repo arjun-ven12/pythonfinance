@@ -139,11 +139,11 @@ export default function StrategyTransparencyPanel({
     <div className="strategy-transparency-panel">
       <div className="strategy-transparency-header">
         <div>
-          <p className="eyebrow">AI Transparency</p>
-          <h3>Generated strategy representation</h3>
+          <p className="eyebrow">Strategy Transparency</p>
+          <h3>Generated execution contract</h3>
           <p>
             This is the normalized algorithm the app will validate and backtest.
-            It exposes the generated strategy structure without exposing internal prompts.
+            It exposes the compiled strategy structure without implying AI-generated trades.
           </p>
         </div>
         <div className="strategy-transparency-status">

@@ -247,6 +247,9 @@ def get_recommendation(
     if openai_reasoning.get("risk_level") == "HIGH":
         checklist.append("OpenAI reasoning flags high event risk.")
 
+    if openai_reasoning.get("fallbackUsed"):
+        checklist.append("AI reasoning unavailable; neutral fallback was used.")
+
     if not openai_reasoning.get("allow_trade", True):
         violations.append("OpenAI reasoning suggests waiting.")
 
@@ -380,6 +383,9 @@ def analyze_pre_trade(
             "confidence_adjustment": 0,
             "allow_trade": False,
             "reasoning": str(error),
+            "aiUnavailable": True,
+            "reason": "gateway_unavailable",
+            "fallbackUsed": True,
         }
 
     portfolio_value = get_portfolio_value(portfolio_state)
@@ -544,6 +550,9 @@ def build_explanation(
 
     if openai_reasoning.get("reasoning"):
         parts.append(f"OpenAI risk note: {openai_reasoning['reasoning']}")
+
+    if openai_reasoning.get("fallbackUsed"):
+        parts.append("AI reasoning fallback was used because the Node AI gateway was unavailable.")
 
     return " ".join(parts)
 

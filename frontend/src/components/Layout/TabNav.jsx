@@ -8,42 +8,41 @@ function getTabLabel(tab) {
   return typeof tab === "string" ? tab : tab.label || tab.key;
 }
 
-function getTabShortLabel(tab) {
-  if (typeof tab !== "string" && tab?.shortLabel) {
-    return tab.shortLabel;
-  }
-  const label = getTabLabel(tab);
-  const words = String(label)
-    .split(/\s+/)
-    .filter(Boolean);
-  if (words.length <= 1) {
-    return String(label).slice(0, 2).toUpperCase();
-  }
-  return words
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join("")
-    .toUpperCase();
+function getTabIcon(tab) {
+  return typeof tab === "string" ? null : tab?.icon || null;
 }
 
-function getTabIcon(tab) {
-  const key = String(getTabKey(tab) || "").toLowerCase();
-  const iconMap = {
-    dashboard: "grid",
-    scanner: "scan",
-    watchlist: "bookmark",
-    approvals: "shield",
-    trades: "arrows",
-    portfolio: "briefcase",
-    alerts: "bell",
-    settings: "gear",
-    "strategy lab": "flask",
-    playbook: "book",
-    validation: "check",
-    broker: "plug",
-    "admin dashboard": "crown",
-  };
-  return iconMap[key] || "dot";
+function NavButton({ active, collapsed, onClick, tab }) {
+  const label = getTabLabel(tab);
+  const Icon = getTabIcon(tab);
+
+  return (
+    <button
+      aria-current={active ? "page" : undefined}
+      aria-label={label}
+      className={active ? "active" : ""}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      {collapsed ? (
+        Icon ? (
+          <span className="tab-icon" aria-hidden="true">
+            <Icon size={18} strokeWidth={1.75} />
+          </span>
+        ) : null
+      ) : (
+        <>
+          {Icon ? (
+            <span className="tab-icon" aria-hidden="true">
+              <Icon size={18} strokeWidth={1.75} />
+            </span>
+          ) : null}
+          <span className="tab-full-label">{label}</span>
+        </>
+      )}
+    </button>
+  );
 }
 
 export default function TabNav({ activeTab, collapsed = false, onChange, sections = [], tabs = [] }) {
@@ -79,34 +78,24 @@ export default function TabNav({ activeTab, collapsed = false, onChange, section
               <div className="tabs-section" key={section.label}>
                 <span className="tabs-section-label">{section.label}</span>
                 {(section.tabs || []).map((tab) => (
-                  <button
-                    className={activeTab === getTabKey(tab) ? "active" : ""}
-                    data-tab-icon={getTabIcon(tab)}
+                  <NavButton
+                    active={activeTab === getTabKey(tab)}
+                    collapsed={collapsed}
                     key={getTabKey(tab)}
                     onClick={() => handleChange(tab)}
-                    title={getTabLabel(tab)}
-                    type="button"
-                  >
-                    <span className={`tab-icon tab-icon-${getTabIcon(tab)}`} aria-hidden="true" />
-                    <span className="tab-short-label">{getTabShortLabel(tab)}</span>
-                    <span className="tab-full-label">{getTabLabel(tab)}</span>
-                  </button>
+                    tab={tab}
+                  />
                 ))}
               </div>
             ))
           : tabs.map((tab) => (
-              <button
-                className={activeTab === getTabKey(tab) ? "active" : ""}
-                data-tab-icon={getTabIcon(tab)}
+              <NavButton
+                active={activeTab === getTabKey(tab)}
+                collapsed={collapsed}
                 key={getTabKey(tab)}
                 onClick={() => handleChange(tab)}
-                title={getTabLabel(tab)}
-                type="button"
-              >
-                <span className={`tab-icon tab-icon-${getTabIcon(tab)}`} aria-hidden="true" />
-                <span className="tab-short-label">{getTabShortLabel(tab)}</span>
-                <span className="tab-full-label">{getTabLabel(tab)}</span>
-              </button>
+                tab={tab}
+              />
             ))}
       </nav>
     </div>

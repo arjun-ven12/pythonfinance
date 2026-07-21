@@ -1,0 +1,36 @@
+function createMemoryController({ queryService, embeddingService, embeddingBackfillService, retrievalService, personalizationService }) {
+  const handle = (fn) => async (req, res) => { try { res.json(await fn(req, res)); } catch (error) { res.status(error.statusCode || 500).json({ error: error.message, details: error.details }); } };
+  return {
+    list: handle((req) => queryService.list(req.user.id, req.query || {})),
+    get: handle((req) => queryService.get(req.user.id, req.params.id)),
+    timeline: handle((req) => queryService.timeline(req.user.id, req.query || {})),
+    important: handle((req) => queryService.important(req.user.id, req.query?.limit)),
+    feedback: handle((req) => queryService.feedback(req.user.id, req.params.id, req.body || {})),
+    exclude: handle((req) => queryService.exclude(req.user.id, req.params.id)),
+    archive: handle((req) => queryService.archive(req.user.id, req.params.id)),
+    diagnostics: handle((req) => queryService.diagnostics(req.user.role === "ADMIN" ? req.query?.userId || null : req.user.id)),
+    embeddingStatus: handle((req) => embeddingService.getEmbeddingStatus(req.user.id, req.params.memoryEventId)),
+    embeddingDiagnostics: handle(() => embeddingService.diagnostics()),
+    retryEmbedding: handle((req) => embeddingService.reembedMemory(req.params.memoryEventId, req.user.id)),
+    rebuildEmbedding: handle((req) => embeddingService.rebuildMemory(req.params.memoryEventId, req.user.id)),
+    markEmbeddingStale: handle((req) => embeddingService.markStale(req.body?.memoryEventId, req.user.id)),
+    backfillEmbeddings: handle((req) => embeddingBackfillService.run(req.user.id, req.body || {})),
+    retrieve: handle((req) => retrievalService.retrieve(req.user.id, req.body || {})),
+    retrievalDiagnostics: handle(() => retrievalService.diagnostics()),
+    retrievalAudit: handle((req) => retrievalService.getAudit(req.user.id, req.params.id)),
+    personalizationProfile: handle((req) => personalizationService.profile(req.user.id)),
+    personalizationRebuild: handle((req) => personalizationService.rebuild(req.user.id)),
+    personalizationReset: handle((req) => personalizationService.reset(req.user.id)),
+    personalizationSettings: handle((req) => personalizationService.settings(req.user.id)),
+    updatePersonalizationSettings: handle((req) => personalizationService.updateSettings(req.user.id, req.body || {})),
+    createPreference: handle((req) => personalizationService.createExplicitPreference(req.user.id, req.body || {})),
+    preferenceAction: handle((req) => personalizationService.decidePreference(req.user.id, req.params.id, req.params.action, req.body || {})),
+    patternAction: handle((req) => personalizationService.decidePattern(req.user.id, req.params.id, req.params.action)),
+    exportMemory: handle((req) => personalizationService.exportData(req.user.id)),
+    deleteMemory: handle((req) => personalizationService.deleteEligibleMemory(req.user.id, req.params.id)),
+    deleteAccountMemory: handle((req) => personalizationService.deleteAccountMemory(req.user.id, req.body || {})),
+    removePersonalizedContext: handle((req) => personalizationService.removePersonalizedContext(req.user.id)),
+    personalizationDiagnostics: handle(() => personalizationService.diagnostics()),
+  };
+}
+module.exports = { createMemoryController };

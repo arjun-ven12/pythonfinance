@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { API_BASE_URL, apiFetch as fetch } from "../../../services/apiClient";
+import { API_BASE_URL } from "../../../services/apiClient";
+import { apiRequest, REQUEST_PRIORITY } from "../../../services/apiRequestManager";
 
 export default function useActiveStrategy({
   activeStrategyStorageKey,
@@ -13,9 +14,11 @@ export default function useActiveStrategy({
 
   const fetchActiveStrategy = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/active-strategy`);
-      if (!response.ok) throw new Error("Unable to load active strategy");
-      const nextActiveStrategy = await response.json();
+      const nextActiveStrategy = await apiRequest(`${API_BASE_URL}/api/active-strategy`, {
+        cacheTtl: 5_000,
+        priority: REQUEST_PRIORITY.MEDIUM,
+        staleTtl: 15_000,
+      });
       setActiveStrategyConfig(nextActiveStrategy);
       setActiveStrategyError("");
       if (nextActiveStrategy.experimentId) {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import formatJsonSummary from "../../../utils/formatJsonSummary";
+import { formatNumber } from "../../../utils/numberFormat";
 import { buildApprovalEditForm } from "../utils/approvalForms";
 import ApprovalTimeline from "./ApprovalTimeline";
 
@@ -233,7 +234,7 @@ export default function ApprovalRequestCard({
       <dl className="approval-metrics">
         <div>
           <dt>Quantity</dt>
-          <dd>{Number(request.quantity || 0).toFixed(2)}</dd>
+          <dd>{formatNumber(request.quantity || 0)}</dd>
         </div>
         <div>
           <dt>Entry</dt>
@@ -249,14 +250,12 @@ export default function ApprovalRequestCard({
         </div>
         <div>
           <dt>Confidence</dt>
-          <dd>{request.confidence == null ? "-" : Number(request.confidence).toFixed(2)}</dd>
+          <dd>{formatNumber(request.confidence)}</dd>
         </div>
         <div>
           <dt>Score</dt>
           <dd>
-            {request.opportunityScore == null
-              ? "-"
-              : Number(request.opportunityScore).toFixed(2)}
+            {formatNumber(request.opportunityScore)}
           </dd>
         </div>
         <div>
@@ -285,7 +284,7 @@ export default function ApprovalRequestCard({
           </div>
           <div>
             <dt>Position delta</dt>
-            <dd>{ledgerImpact.positionDelta ?? "-"}</dd>
+            <dd>{formatNumber(ledgerImpact.positionDelta)}</dd>
           </div>
           <div>
             <dt>Cash after</dt>

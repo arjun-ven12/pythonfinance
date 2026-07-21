@@ -12,6 +12,7 @@ function createPaperExecutionService({
   rebuildCaches,
   requireUserId,
   spawn,
+  memoryIngestionService = null,
 }) {
   function runPaperOrder(order, userId) {
     return new Promise(async (resolve, reject) => {
@@ -149,13 +150,73 @@ function createPaperExecutionService({
           },
         });
 
+        const symbol = String(trade.symbol || "").toUpperCase();
+        const beforePosition = cached?.stateJson?.positions?.[symbol];
+        const beforeQuantity = Number(beforePosition?.quantity || 0);
+        const beforeRealizedPnl = Number(cached?.stateJson?.realized_pnl || 0);
         await appendPaperExecution(transaction, ownerId, {
           trade,
           executionId: paperTrade.id,
           orderId: approvalRequestId,
           approvalId: approvalRequestId,
         });
-        await rebuildCaches(transaction, ownerId, cached?.stateJson);
+        const strategyVersionId =
+          approval.raw?.strategyVersionId ||
+          approval.raw?.active_strategy_config?.strategyVersionId ||
+          null;
+        const matrixCellId =
+          approval.raw?.matrixCellId ||
+          approval.raw?.matrix_cell_id ||
+          approval.raw?.active_strategy_config?.matrixCellId ||
+          null;
+        const brokerFillIds = Array.isArray(approvalUpdates.raw?.broker_fill_ids)
+          ? approvalUpdates.raw.broker_fill_ids.filter(Boolean).slice(0, 20)
+          : [];
+        const rebuilt = await rebuildCaches(transaction, ownerId, cached?.stateJson, {
+          trigger: "INTERNAL_PAPER_FILL",
+          fillId: brokerFillIds[0] || paperTrade.id,
+          tradeId: paperTrade.id,
+          orderId: approvalRequestId,
+          approvalId: approvalRequestId,
+          strategyVersionId,
+          matrixCellId,
+          observedAfter: paperTrade.id,
+          auditCritical: true,
+          forceMemory: true,
+        });
+        if (memoryIngestionService) {
+          const { internalPaperExecutionEvents, portfolioAllocationChangedEvent, portfolioOutcomeEvent } = require("../../memory/services/memoryEvents");
+          const afterQuantity = Number(rebuilt.ledgerState?.positions?.[symbol]?.quantity || 0);
+          const outcomeContext = {
+            beforeState: cached?.stateJson || {},
+            observedAfter: brokerFillIds.length ? "BROKER_FILL" : "INTERNAL_PAPER_FILL",
+            associatedDecisionId: approvalRequestId,
+            observationWindow: "IMMEDIATE_POST_FILL",
+            orderId: approvalUpdates.raw?.broker_order_id || approvalRequestId,
+            fillId: brokerFillIds[0] || paperTrade.id,
+            fillIds: brokerFillIds,
+            tradeId: paperTrade.id,
+            approvalId: approvalRequestId,
+            symbol,
+            beforeQuantity,
+            afterQuantity,
+          };
+          await memoryIngestionService.recordEvents(
+            [
+              ...internalPaperExecutionEvents(paperTrade, {
+                beforeQuantity,
+                afterQuantity,
+                realizedPnlDelta: Number(rebuilt.ledgerState?.realized_pnl || 0) - beforeRealizedPnl,
+                snapshotId: rebuilt.snapshot?.id,
+                strategyVersionId,
+                matrixCellId,
+              }),
+              portfolioAllocationChangedEvent(rebuilt.snapshot, outcomeContext),
+              portfolioOutcomeEvent(rebuilt.snapshot, outcomeContext),
+            ],
+            { transaction, critical: true }
+          );
+        }
 
         const raw =
           approval.raw && typeof approval.raw === "object" ? approval.raw : {};

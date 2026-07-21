@@ -182,8 +182,9 @@ export default function useScanJobs({
     [isScanning, pollScanJob, updateScanProgressFromJob]
   );
 
-  const runScan = useCallback(async () => {
-    const scanWatchlistOnly = Boolean(settings.scanWatchlistOnly);
+  const runScan = useCallback(async (options = {}) => {
+    const scanWatchlistOnly =
+      options?.watchlistOnly ?? Boolean(settings.scanWatchlistOnly);
     const requestedCount = scanWatchlistOnly
       ? Math.max(1, watchlist.size)
       : Number(settings.scanLimit);
@@ -199,6 +200,11 @@ export default function useScanJobs({
       requestedCount,
     });
   }, [settings, startScanJob, watchlist]);
+
+  const runWatchlistScan = useCallback(
+    () => runScan({ watchlistOnly: true }),
+    [runScan]
+  );
 
   const runSymbolScan = useCallback(
     async (symbol) => {
@@ -292,6 +298,7 @@ export default function useScanJobs({
     jobId,
     progress,
     runScan,
+    runWatchlistScan,
     runSymbolScan,
   };
 }

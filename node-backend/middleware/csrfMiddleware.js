@@ -10,6 +10,7 @@ const CSRF_EXEMPT_PATH_PREFIXES = [
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/auth/csrf",
+  "/internal/ai",
   "/api/security/csp-report",
 ];
 

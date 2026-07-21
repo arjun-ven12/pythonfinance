@@ -53,6 +53,15 @@ def safe_iso(value):
     return str(value)
 
 
+def normalize_optional_text(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text.upper() == "NONE":
+        return None
+    return text
+
+
 def build_monthly_returns(equity_curve):
     if not equity_curve:
         return []
@@ -228,8 +237,8 @@ def run_matrix_replay(config):
             continue
         symbols.append(symbol)
         symbol_meta[symbol] = {
-            "sector": str((entry or {}).get("sector") if isinstance(entry, dict) else "") or None,
-            "industry": str((entry or {}).get("industry") if isinstance(entry, dict) else "") or None,
+            "sector": normalize_optional_text((entry or {}).get("sector") if isinstance(entry, dict) else None),
+            "industry": normalize_optional_text((entry or {}).get("industry") if isinstance(entry, dict) else None),
         }
 
     if not symbols:

@@ -1,3 +1,5 @@
+import { formatNumber } from "../../../utils/numberFormat";
+
 export default function WatchlistCard({ formatPercent, item, onRemove, onSelect, symbol }) {
   if (!item) {
     return (
@@ -32,11 +34,11 @@ export default function WatchlistCard({ formatPercent, item, onRemove, onSelect,
       <dl className="watchlist-metrics">
         <div>
           <dt>Score</dt>
-          <dd>{item.opportunity_score}</dd>
+          <dd>{formatNumber(item.opportunity_score)}</dd>
         </div>
         <div>
           <dt>Confidence</dt>
-          <dd>{item.confidence}</dd>
+          <dd>{formatNumber(item.confidence)}</dd>
         </div>
         <div>
           <dt>Backtest</dt>

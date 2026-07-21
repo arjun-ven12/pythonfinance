@@ -59,6 +59,53 @@ enum ApprovalMode {
   FULL_AUTOMATION
 }
 
+enum MemoryCategory {
+  STRATEGY
+  PORTFOLIO
+  MATRIX
+  RESEARCH
+  TRADE
+  BROKER
+  APPROVAL
+  SCANNER
+  RISK
+  AI
+  SYSTEM
+}
+
+enum MemoryRetentionState {
+  ACTIVE
+  ARCHIVED
+  EXCLUDED
+  DELETED_PENDING
+}
+
+enum MemoryCreatedByType {
+  USER
+  AI
+  SYSTEM
+  BACKFILL
+}
+
+enum MemoryFeedbackType {
+  USEFUL
+  NOT_USEFUL
+  INCORRECT
+  CORRECTED
+  CONFIRMED_BY_OUTCOME
+  DISPROVED_BY_OUTCOME
+  EXCLUDE_FROM_AI
+}
+
+enum MemoryEmbeddingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  STALE
+  EXCLUDED
+}
+
 enum BrokerExecutionMode {
   READ_ONLY
   PAPER_BROKER
@@ -210,21 +257,21 @@ enum AdminAuditAction {
 }
 
 model Scan {
-  id             String                @id @default(uuid())
-  externalScanId String?
-  userId         String
-  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String                @id @default(uuid())
+  externalScanId    String?
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   strategyVersionId String?
-  generatedAt    DateTime              @default(now())
-  scanDuration   Float?
-  marketRegime   String?
-  riskMultiplier Float?
-  source         String                @default("scanner")
-  raw            Json?
-  opportunities  Opportunity[]
-  alerts         Alert[]
-  performance    StrategyPerformance[]
-  playbookRuns   PlaybookRun[]
+  generatedAt       DateTime              @default(now())
+  scanDuration      Float?
+  marketRegime      String?
+  riskMultiplier    Float?
+  source            String                @default("scanner")
+  raw               Json?
+  opportunities     Opportunity[]
+  alerts            Alert[]
+  performance       StrategyPerformance[]
+  playbookRuns      PlaybookRun[]
 
   @@unique([userId, externalScanId])
   @@index([strategyVersionId])
@@ -292,55 +339,55 @@ model Opportunity {
 }
 
 model ValidationSignal {
-  id                 String    @id @default(uuid())
-  userId             String
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  symbol             String
-  timestamp          DateTime
-  signal             Signal
-  confidence         Float?
-  confidenceBucket   String?
-  scannerScore       Float?
-  marketRegime       String?
-  sector             String?
-  market             String?
-  exchange           String?
-  strategyName       String?
-  strategyId         String?
-  strategyVersionId  String?
-  fitScore           Float?
-  regimeAtSignal     String?
-  sectorContext      String?
-  instrumentType     String?
-  horizon            String?
-  openAiAdjustment   Float?
-  newsAdjustment     Float?
-  closePriceAtSignal Float?
-  entryPrice         Float?
-  exitPrice          Float?
-  backtestScore      Float?
-  return1d           Float?
-  return3d           Float?
-  return5d           Float?
-  return10d          Float?
-  return20d          Float?
-  return60d          Float?
-  actualReturn       Float?
-  maxDrawdown        Float?
-  maxRunup           Float?
-  maxReturn          Float?
-  minReturn          Float?
-  drawdown           Float?
+  id                   String                     @id @default(uuid())
+  userId               String
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol               String
+  timestamp            DateTime
+  signal               Signal
+  confidence           Float?
+  confidenceBucket     String?
+  scannerScore         Float?
+  marketRegime         String?
+  sector               String?
+  market               String?
+  exchange             String?
+  strategyName         String?
+  strategyId           String?
+  strategyVersionId    String?
+  fitScore             Float?
+  regimeAtSignal       String?
+  sectorContext        String?
+  instrumentType       String?
+  horizon              String?
+  openAiAdjustment     Float?
+  newsAdjustment       Float?
+  closePriceAtSignal   Float?
+  entryPrice           Float?
+  exitPrice            Float?
+  backtestScore        Float?
+  return1d             Float?
+  return3d             Float?
+  return5d             Float?
+  return10d            Float?
+  return20d            Float?
+  return60d            Float?
+  actualReturn         Float?
+  maxDrawdown          Float?
+  maxRunup             Float?
+  maxReturn            Float?
+  minReturn            Float?
+  drawdown             Float?
   evaluationVolatility Float?
-  winLoss            String?
-  outcomeDirection   String?
-  holdingDays        Int?
-  evaluationHorizon  String?
-  evaluationStatus   ValidationEvaluationStatus @default(PENDING)
-  evaluationError    String?
-  evaluatedAt        DateTime?
-  raw                Json?
-  createdAt          DateTime  @default(now())
+  winLoss              String?
+  outcomeDirection     String?
+  holdingDays          Int?
+  evaluationHorizon    String?
+  evaluationStatus     ValidationEvaluationStatus @default(PENDING)
+  evaluationError      String?
+  evaluatedAt          DateTime?
+  raw                  Json?
+  createdAt            DateTime                   @default(now())
 
   @@unique([userId, symbol, timestamp])
   @@index([userId, createdAt])
@@ -381,65 +428,66 @@ model MarketRegimeSnapshot {
 }
 
 model CalibrationMetric {
-  id                    String   @id @default(uuid())
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dimension             String
-  bucket                String
-  horizon               String
-  predictedConfidence   Float?
-  actualWinRate         Float?
-  avgReturn             Float?
-  medianReturn          Float?
-  sampleCount           Int
-  calibrationError      Float?
-  brierScore            Float?
-  confidenceInterval    Json?
-  evidenceScore         String
-  supportingSignalIds   Json?
-  generatedAt           DateTime @default(now())
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dimension           String
+  bucket              String
+  horizon             String
+  predictedConfidence Float?
+  actualWinRate       Float?
+  avgReturn           Float?
+  medianReturn        Float?
+  sampleCount         Int
+  calibrationError    Float?
+  brierScore          Float?
+  confidenceInterval  Json?
+  evidenceScore       String
+  supportingSignalIds Json?
+  generatedAt         DateTime @default(now())
 
   @@index([userId, generatedAt])
   @@index([userId, dimension, bucket, horizon])
 }
 
 model Alert {
-  id             String    @id @default(uuid())
-  scanId         String?
-  scan           Scan?     @relation(fields: [scanId], references: [id], onDelete: SetNull)
-  category       AlertCategory @default(SCANNER)
-  severity       AlertSeverity @default(MEDIUM)
-  status         AlertStatus   @default(ACTIVE)
-  source         AlertSource   @default(SCAN)
-  symbol         String
-  title          String?
-  message        String?
-  score          Float
-  confidence     Float?
-  backtestReturn Float?
-  drawdown       Float?
-  reasons        Json?
-  metadata       Json?
-  scoreBucket    String?
-  dedupeKey      String?
-  occurrences    Int       @default(1)
+  id              String          @id @default(uuid())
+  scanId          String?
+  scan            Scan?           @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  category        AlertCategory   @default(SCANNER)
+  severity        AlertSeverity   @default(MEDIUM)
+  status          AlertStatus     @default(ACTIVE)
+  source          AlertSource     @default(SCAN)
+  symbol          String
+  title           String?
+  message         String?
+  score           Float
+  confidence      Float?
+  backtestReturn  Float?
+  drawdown        Float?
+  reasons         Json?
+  metadata        Json?
+  scoreBucket     String?
+  dedupeKey       String?
+  occurrences     Int             @default(1)
   lastTriggeredAt DateTime?
-  generatedAt    DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  expiresAt      DateTime?
-  acknowledgedAt DateTime?
-  snoozedUntil   DateTime?
-  resolvedAt     DateTime?
-  actionedBy     String?
-  actionReason   String?
-  sentAt         DateTime?
-  channel        String?
-  raw            Json?
-  userId         String
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deliveries     AlertDelivery[]
+  generatedAt     DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  expiresAt       DateTime?
+  acknowledgedAt  DateTime?
+  snoozedUntil    DateTime?
+  resolvedAt      DateTime?
+  actionedBy      String?
+  actionReason    String?
+  sentAt          DateTime?
+  channel         String?
+  raw             Json?
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries      AlertDelivery[]
 
+  @@unique([userId, dedupeKey])
   @@index([symbol, generatedAt])
   @@index([scanId])
   @@index([userId])
@@ -447,26 +495,25 @@ model Alert {
   @@index([userId, category, status])
   @@index([userId, lastTriggeredAt])
   @@index([userId, dedupeKey])
-  @@unique([userId, dedupeKey])
 }
 
 model AlertDelivery {
-  id              String              @id @default(uuid())
-  userId          String
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  alertId         String
-  alert           Alert               @relation(fields: [alertId], references: [id], onDelete: Cascade)
-  channelId       String?
-  channel         NotificationChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
-  status          AlertDeliveryStatus @default(PENDING)
-  attempts        Int                 @default(0)
-  nextAttemptAt   DateTime?
-  lastAttemptAt   DateTime?
-  sentAt          DateTime?
-  failureReason   String?
-  payload         Json?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id            String               @id @default(uuid())
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertId       String
+  alert         Alert                @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  channelId     String?
+  channel       NotificationChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  status        AlertDeliveryStatus  @default(PENDING)
+  attempts      Int                  @default(0)
+  nextAttemptAt DateTime?
+  lastAttemptAt DateTime?
+  sentAt        DateTime?
+  failureReason String?
+  payload       Json?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   @@index([userId, status, nextAttemptAt])
   @@index([alertId])
@@ -474,35 +521,35 @@ model AlertDelivery {
 }
 
 model AlertRule {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  enabled     Boolean  @default(true)
-  category    AlertCategory?
-  severity    AlertSeverity?
-  conditions  Json
-  actions     Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String         @id @default(uuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  enabled    Boolean        @default(true)
+  category   AlertCategory?
+  severity   AlertSeverity?
+  conditions Json
+  actions    Json
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   @@unique([userId, name])
   @@index([userId, enabled])
 }
 
 model AlertDigest {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   mode        String
-  status      String   @default("PENDING")
+  status      String    @default("PENDING")
   alertIds    Json
   title       String
   message     String?
   scheduledAt DateTime?
   sentAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([userId, status, scheduledAt])
 }
@@ -521,91 +568,165 @@ model Watchlist {
 }
 
 model User {
-  id                       String                    @id @default(uuid())
-  name                     String
-  email                    String                    @unique
-  passwordHash             String
-  role                     UserRole                  @default(LEVEL_1_USER)
-  verificationStatus       VerificationStatus        @default(PENDING_VERIFICATION)
-  verifiedAt               DateTime?
-  verifiedByUserId         String?
-  verifiedByUser           User?                     @relation("UserVerifiedBy", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
-  verifiedUsers            User[]                    @relation("UserVerifiedBy")
-  rejectedAt               DateTime?
-  rejectedReason           String?
-  lastRoleChangedAt        DateTime?
-  roleChangedByUserId      String?
-  roleChangedByUser        User?                     @relation("UserRoleChangedBy", fields: [roleChangedByUserId], references: [id], onDelete: SetNull)
-  roleChangedUsers         User[]                    @relation("UserRoleChangedBy")
-  lastLoginAt              DateTime?
-  failedLoginAttempts      Int                       @default(0)
-  lockedUntil              DateTime?
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  alerts                   Alert[]
-  watchlist                Watchlist[]
-  trades                   Trade[]
-  positions                Position[]
-  proposedTrades           ProposedTrade[]
-  approvalRequests         ApprovalRequest[]
-  strategyExperiments      StrategyExperiment[]
-  strategyVersions         StrategyVersion[]
-  strategyRuns             StrategyRun[]
-  walkForwardRuns          WalkForwardRun[]
-  strategyStressResults    StrategyStressResult[]
-  notificationChannels     NotificationChannel[]
-  alertDeliveries          AlertDelivery[]
-  alertRules               AlertRule[]
-  alertDigests             AlertDigest[]
-  settings                 Settings[]
-  portfolioStates          PortfolioState[]
-  marketDataSnapshots      MarketDataSnapshot[]
-  engineRuns               EngineRun[]
-  scans                    Scan[]
-  opportunities            Opportunity[]
-  validationSignals        ValidationSignal[]
-  calibrationMetrics       CalibrationMetric[]
-  marketRegimeSnapshots    MarketRegimeSnapshot[]
-  stockUniverses           StockUniverse[]
-  strategyPerformance      StrategyPerformance[]
-  paperTrades              PaperTrade[]
-  safetySettings           SafetySettings[]
-  brokerConfigs            BrokerConfig[]
-  brokerSecrets            BrokerSecret[]
-  brokerConnectionLogs     BrokerConnectionLog[]
-  brokerExecutionAudits    BrokerExecutionAudit[]
-  brokerOrders             BrokerOrder[]
-  brokerFills              BrokerFill[]
-  brokerOrderEvents        BrokerOrderEvent[]
-  engineStatuses           EngineStatus[]
-  playbooks                Playbook[]
-  playbookRuns             PlaybookRun[]
-  playbookInsights         PlaybookInsight[]
-  playbookSnapshots        PlaybookSnapshot[]
-  playbookExports          PlaybookExport[]
-  playbookVersions         PlaybookVersion[]
-  playbookRecommendations  PlaybookRecommendation[]
-  strategyComparisons      StrategyComparison[]
-  strategyParameterSweeps  StrategyParameterSweep[]
-  strategyDeploymentSets   StrategyDeploymentSet[]
-  strategyDeploymentRoutes StrategyDeploymentRoute[]
-  strategyCapitalAllocations StrategyCapitalAllocation[]
-  strategyAllocationSnapshots StrategyAllocationSnapshot[]
+  id                               String                       @id @default(uuid())
+  name                             String
+  email                            String                       @unique
+  passwordHash                     String
+  role                             UserRole                     @default(LEVEL_1_USER)
+  verificationStatus               VerificationStatus           @default(PENDING_VERIFICATION)
+  verifiedAt                       DateTime?
+  verifiedByUserId                 String?
+  verifiedByUser                   User?                        @relation("UserVerifiedBy", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+  verifiedUsers                    User[]                       @relation("UserVerifiedBy")
+  rejectedAt                       DateTime?
+  rejectedReason                   String?
+  lastRoleChangedAt                DateTime?
+  roleChangedByUserId              String?
+  roleChangedByUser                User?                        @relation("UserRoleChangedBy", fields: [roleChangedByUserId], references: [id], onDelete: SetNull)
+  roleChangedUsers                 User[]                       @relation("UserRoleChangedBy")
+  lastLoginAt                      DateTime?
+  failedLoginAttempts              Int                          @default(0)
+  lockedUntil                      DateTime?
+  createdAt                        DateTime                     @default(now())
+  updatedAt                        DateTime                     @updatedAt
+  alerts                           Alert[]
+  watchlist                        Watchlist[]
+  trades                           Trade[]
+  positions                        Position[]
+  proposedTrades                   ProposedTrade[]
+  approvalRequests                 ApprovalRequest[]
+  strategyExperiments              StrategyExperiment[]
+  strategyVersions                 StrategyVersion[]
+  strategyRuns                     StrategyRun[]
+  walkForwardRuns                  WalkForwardRun[]
+  strategyStressResults            StrategyStressResult[]
+  notificationChannels             NotificationChannel[]
+  alertDeliveries                  AlertDelivery[]
+  alertRules                       AlertRule[]
+  alertDigests                     AlertDigest[]
+  settings                         Settings[]
+  portfolioStates                  PortfolioState[]
+  marketDataSnapshots              MarketDataSnapshot[]
+  engineRuns                       EngineRun[]
+  scans                            Scan[]
+  opportunities                    Opportunity[]
+  validationSignals                ValidationSignal[]
+  calibrationMetrics               CalibrationMetric[]
+  marketRegimeSnapshots            MarketRegimeSnapshot[]
+  stockUniverses                   StockUniverse[]
+  strategyPerformance              StrategyPerformance[]
+  paperTrades                      PaperTrade[]
+  safetySettings                   SafetySettings[]
+  brokerConfigs                    BrokerConfig[]
+  brokerSecrets                    BrokerSecret[]
+  brokerConnectionLogs             BrokerConnectionLog[]
+  brokerExecutionAudits            BrokerExecutionAudit[]
+  brokerOrders                     BrokerOrder[]
+  brokerFills                      BrokerFill[]
+  brokerOrderEvents                BrokerOrderEvent[]
+  engineStatuses                   EngineStatus[]
+  playbooks                        Playbook[]
+  playbookRuns                     PlaybookRun[]
+  playbookInsights                 PlaybookInsight[]
+  playbookSnapshots                PlaybookSnapshot[]
+  playbookExports                  PlaybookExport[]
+  playbookVersions                 PlaybookVersion[]
+  playbookRecommendations          PlaybookRecommendation[]
+  aiInvocations                    AiInvocation[]
+  strategyComparisons              StrategyComparison[]
+  strategyParameterSweeps          StrategyParameterSweep[]
+  strategyDeploymentSets           StrategyDeploymentSet[]
+  strategyDeploymentRoutes         StrategyDeploymentRoute[]
+  strategyCapitalAllocations       StrategyCapitalAllocation[]
+  strategyAllocationSnapshots      StrategyAllocationSnapshot[]
   strategyAllocationAuditLogs      StrategyAllocationAuditLog[] @relation("StrategyAllocationAuditSubject")
   strategyAllocationAuditLogsActor StrategyAllocationAuditLog[] @relation("StrategyAllocationAuditActor")
-  transactionLedger        TransactionLedger[]
-  portfolioReconciliations PortfolioReconciliation[]
-  scanJobs                 ScanJob[]
-  refreshTokens            RefreshToken[]
-  pageAccessEntries        UserPageAccess[]          @relation("UserPageAccessSubject")
-  pageAccessUpdates        UserPageAccess[]          @relation("UserPageAccessUpdatedBy")
-  adminAuditLogsActor      AdminAuditLog[]           @relation("AdminAuditActor")
-  adminAuditLogsTarget     AdminAuditLog[]           @relation("AdminAuditTarget")
+  transactionLedger                TransactionLedger[]
+  portfolioReconciliations         PortfolioReconciliation[]
+  portfolioProposals               PortfolioProposal[]          @relation("PortfolioProposalOwner")
+  portfolioProposalDecisions       PortfolioProposalDecision[]  @relation("PortfolioProposalDecisionActor")
+  researchProjects                 ResearchProject[]
+  researchReports                  ResearchReport[]
+  researchNotes                    ResearchNote[]
+  researchQuestions                ResearchQuestion[]
+  researchTheses                   ResearchThesis[]
+  matrixReplaySnapshots            MatrixReplaySnapshot[]
+  matrixProposals                  MatrixProposal[]             @relation("MatrixProposalOwner")
+  matrixProposalDecisions          MatrixProposalDecision[]     @relation("MatrixProposalDecisionActor")
+  memoryEvents                     MemoryEvent[]
+  memoryLinks                      MemoryLink[]
+  memoryFeedback                   MemoryFeedback[]
+  memoryEmbeddings                 MemoryEmbedding[]
+  memoryRetrievalAudits            MemoryRetrievalAudit[]
+  memoryProfiles                   UserMemoryProfile[]
+  memoryPreferences                UserPreference[]
+  memoryBehaviorPatterns           UserBehaviorPattern[]
+  memoryPersonalizationSettings    MemoryPersonalizationSetting?
+  scanJobs                         ScanJob[]
+  refreshTokens                    RefreshToken[]
+  pageAccessEntries                UserPageAccess[]             @relation("UserPageAccessSubject")
+  pageAccessUpdates                UserPageAccess[]             @relation("UserPageAccessUpdatedBy")
+  adminAuditLogsActor              AdminAuditLog[]              @relation("AdminAuditActor")
+  adminAuditLogsTarget             AdminAuditLog[]              @relation("AdminAuditTarget")
 
   @@index([email])
   @@index([role, verificationStatus])
   @@index([verifiedByUserId])
   @@index([roleChangedByUserId])
+}
+
+model AiInvocation {
+  id                 String   @id @default(uuid())
+  requestId          String?
+  userId             String?
+  userIds            Json?
+  user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  featureType        String
+  provider           String?
+  model              String?
+  promptTemplateId   String?
+  promptVersion      String?
+  promptHash         String?
+  schemaName         String?
+  schemaHash         String?
+  inputHash          String
+  providerResponseId String?
+  endpoint           String?
+  promptTokens       Int?
+  completionTokens   Int?
+  inputTokens        Int?
+  outputTokens       Int?
+  cachedTokens       Int?
+  totalTokens        Int?
+  estimatedCostUsd   Float?
+  inputTokenCostUsd  Float?
+  outputTokenCostUsd Float?
+  cachedTokenCostUsd Float?
+  observabilityCostUsd Float?
+  estimatedCostSgd   Float?
+  usdToSgdRate       Float?
+  pricingVersion     String?
+  pricingConfigured  Boolean  @default(false)
+  latencyMs          Int?
+  providerLatencyMs  Int?
+  retryCount         Int      @default(0)
+  status             String
+  errorCategory      String?
+  cacheStatus        String?
+  tokenBreakdown     Json?
+  contextBreakdown   Json?
+  contextDiff        Json?
+  largestContributor String?
+  warnings           Json?
+  responseAnalysis   Json?
+  createdAt          DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, featureType, createdAt])
+  @@index([featureType, createdAt])
+  @@index([status, createdAt])
+  @@index([model, createdAt])
+  @@index([requestId])
 }
 
 model UserPageAccess {
@@ -797,34 +918,34 @@ model StrategyPerformance {
 }
 
 model StrategyExperiment {
-  id               String                   @id @default(uuid())
-  name             String
-  description      String?
-  status           String                   @default("DRAFT")
-  settingsJson     Json?
-  encryptedStrategy String?                 @db.Text
-  encryptedStrategyKey String?              @db.Text
-  strategyEncryptionIv String?
-  strategyEncryptionTag String?
-  strategyEncryptionKeyIv String?
-  strategyEncryptionKeyTag String?
+  id                                 String                       @id @default(uuid())
+  name                               String
+  description                        String?
+  status                             String                       @default("DRAFT")
+  settingsJson                       Json?
+  encryptedStrategy                  String?                      @db.Text
+  encryptedStrategyKey               String?                      @db.Text
+  strategyEncryptionIv               String?
+  strategyEncryptionTag              String?
+  strategyEncryptionKeyIv            String?
+  strategyEncryptionKeyTag           String?
   strategyEncryptionAlgorithmVersion String?
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
-  runs             StrategyRun[]
-  versions         StrategyVersion[]
-  parameterSweeps  StrategyParameterSweep[]
-  walkForwardRuns  WalkForwardRun[]
-  stressResults    StrategyStressResult[]
-  leftComparisons  StrategyComparison[]     @relation("LeftStrategyExperiment")
-  rightComparisons StrategyComparison[]     @relation("RightStrategyExperiment")
-  playbookVersions PlaybookVersion[]
-  deploymentSetsOwned StrategyDeploymentSet[]   @relation("DeploymentOwnerExperiment")
-  deploymentRoutes  StrategyDeploymentRoute[]   @relation("DeploymentRouteExperiment")
-  capitalAllocations StrategyCapitalAllocation[]
-  allocationAuditLogs StrategyAllocationAuditLog[]
-  userId           String
-  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt                          DateTime                     @default(now())
+  updatedAt                          DateTime                     @updatedAt
+  runs                               StrategyRun[]
+  versions                           StrategyVersion[]
+  parameterSweeps                    StrategyParameterSweep[]
+  walkForwardRuns                    WalkForwardRun[]
+  stressResults                      StrategyStressResult[]
+  leftComparisons                    StrategyComparison[]         @relation("LeftStrategyExperiment")
+  rightComparisons                   StrategyComparison[]         @relation("RightStrategyExperiment")
+  playbookVersions                   PlaybookVersion[]
+  deploymentSetsOwned                StrategyDeploymentSet[]      @relation("DeploymentOwnerExperiment")
+  deploymentRoutes                   StrategyDeploymentRoute[]    @relation("DeploymentRouteExperiment")
+  capitalAllocations                 StrategyCapitalAllocation[]
+  allocationAuditLogs                StrategyAllocationAuditLog[]
+  userId                             String
+  user                               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, name])
   @@index([status])
@@ -834,31 +955,31 @@ model StrategyExperiment {
 }
 
 model StrategyVersion {
-  id                  String                   @id @default(uuid())
-  userId              String
-  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  experimentId        String
-  experiment          StrategyExperiment       @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  version             Int
-  deploymentStatus    StrategyDeploymentStatus @default(DRAFT)
-  strategyJson        Json?
-  settingsJson        Json?
-  encryptedStrategy   String?                  @db.Text
-  encryptedStrategyKey String?                 @db.Text
-  strategyEncryptionIv String?
-  strategyEncryptionTag String?
-  strategyEncryptionKeyIv String?
-  strategyEncryptionKeyTag String?
+  id                                 String                      @id @default(uuid())
+  userId                             String
+  user                               User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experimentId                       String
+  experiment                         StrategyExperiment          @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  version                            Int
+  deploymentStatus                   StrategyDeploymentStatus    @default(DRAFT)
+  strategyJson                       Json?
+  settingsJson                       Json?
+  encryptedStrategy                  String?                     @db.Text
+  encryptedStrategyKey               String?                     @db.Text
+  strategyEncryptionIv               String?
+  strategyEncryptionTag              String?
+  strategyEncryptionKeyIv            String?
+  strategyEncryptionKeyTag           String?
   strategyEncryptionAlgorithmVersion String?
-  evidenceJson        Json?
-  activationRulesJson Json?
-  activatedAt         DateTime?
-  archivedAt          DateTime?
-  changeNote          String?
-  createdAt           DateTime                 @default(now())
-  deploymentSetsOwned StrategyDeploymentSet[]  @relation("DeploymentOwnerVersion")
-  deploymentRoutes    StrategyDeploymentRoute[] @relation("DeploymentRouteVersion")
-  capitalAllocations  StrategyCapitalAllocation[]
+  evidenceJson                       Json?
+  activationRulesJson                Json?
+  activatedAt                        DateTime?
+  archivedAt                         DateTime?
+  changeNote                         String?
+  createdAt                          DateTime                    @default(now())
+  deploymentSetsOwned                StrategyDeploymentSet[]     @relation("DeploymentOwnerVersion")
+  deploymentRoutes                   StrategyDeploymentRoute[]   @relation("DeploymentRouteVersion")
+  capitalAllocations                 StrategyCapitalAllocation[]
 
   @@unique([experimentId, version])
   @@index([userId, createdAt])
@@ -868,47 +989,94 @@ model StrategyVersion {
 }
 
 model StrategyDeploymentSet {
-  id                   String                    @id @default(uuid())
-  userId               String                    @unique
-  user                 User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                 String                    @default("Primary Deployment Set")
-  ownerExperimentId    String?
-  ownerExperiment      StrategyExperiment?       @relation("DeploymentOwnerExperiment", fields: [ownerExperimentId], references: [id], onDelete: SetNull)
+  id                     String                       @id @default(uuid())
+  userId                 String                       @unique
+  user                   User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                   String                       @default("Primary Deployment Set")
+  ownerExperimentId      String?
+  ownerExperiment        StrategyExperiment?          @relation("DeploymentOwnerExperiment", fields: [ownerExperimentId], references: [id], onDelete: SetNull)
   ownerStrategyVersionId String?
-  ownerStrategyVersion StrategyVersion?          @relation("DeploymentOwnerVersion", fields: [ownerStrategyVersionId], references: [id], onDelete: SetNull)
-  allocationMethod     StrategyAllocationMethod  @default(EQUAL_WEIGHT)
-  rebalanceFrequency   String                    @default("WEEKLY")
-  maxDriftPct          Float                     @default(5)
-  guardrailsJson       Json?
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  routes               StrategyDeploymentRoute[]
-  capitalAllocations   StrategyCapitalAllocation[]
-  snapshots            StrategyAllocationSnapshot[]
-  auditLogs            StrategyAllocationAuditLog[]
+  ownerStrategyVersion   StrategyVersion?             @relation("DeploymentOwnerVersion", fields: [ownerStrategyVersionId], references: [id], onDelete: SetNull)
+  allocationMethod       StrategyAllocationMethod     @default(EQUAL_WEIGHT)
+  rebalanceFrequency     String                       @default("WEEKLY")
+  maxDriftPct            Float                        @default(5)
+  guardrailsJson         Json?
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
+  routes                 StrategyDeploymentRoute[]
+  capitalAllocations     StrategyCapitalAllocation[]
+  snapshots              StrategyAllocationSnapshot[]
+  auditLogs              StrategyAllocationAuditLog[]
+  matrixProposals        MatrixProposal[]
 
   @@index([ownerExperimentId])
   @@index([ownerStrategyVersionId])
 }
 
+model MatrixProposal {
+  id                  String                   @id @default(uuid())
+  userId              String
+  user                User                     @relation("MatrixProposalOwner", fields: [userId], references: [id], onDelete: Cascade)
+  deploymentSetId     String
+  deploymentSet       StrategyDeploymentSet    @relation(fields: [deploymentSetId], references: [id], onDelete: Cascade)
+  parentProposalId    String?
+  parentProposal      MatrixProposal?          @relation("MatrixProposalRevisions", fields: [parentProposalId], references: [id], onDelete: SetNull)
+  revisions           MatrixProposal[]         @relation("MatrixProposalRevisions")
+  title               String
+  objective           String
+  status              String                   @default("DRAFT")
+  proposalJson        Json
+  simulationJson      Json
+  explanationJson     Json?
+  evidenceJson        Json?
+  sourcePrompt        String?
+  promptVersion       String                   @default("v1")
+  simulationVersion   String                   @default("matrix-scenario-v1")
+  deploymentUpdatedAt DateTime
+  confidence          Float?
+  deletedAt           DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  decisions           MatrixProposalDecision[]
+
+  @@index([userId, status, createdAt])
+  @@index([deploymentSetId, createdAt])
+  @@index([parentProposalId])
+}
+
+model MatrixProposalDecision {
+  id           String         @id @default(uuid())
+  proposalId   String
+  proposal     MatrixProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  actorUserId  String
+  actor        User           @relation("MatrixProposalDecisionActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+  status       ApprovalStatus @default(PENDING)
+  reason       String?
+  metadataJson Json?
+  createdAt    DateTime       @default(now())
+
+  @@index([proposalId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
 model StrategyDeploymentRoute {
-  id                    String                       @id @default(uuid())
-  userId                String
-  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deploymentSetId       String
-  deploymentSet         StrategyDeploymentSet        @relation(fields: [deploymentSetId], references: [id], onDelete: Cascade)
-  sector                String
-  regime                String
-  selectedExperimentId  String?
-  selectedExperiment    StrategyExperiment?          @relation("DeploymentRouteExperiment", fields: [selectedExperimentId], references: [id], onDelete: SetNull)
+  id                        String                       @id @default(uuid())
+  userId                    String
+  user                      User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deploymentSetId           String
+  deploymentSet             StrategyDeploymentSet        @relation(fields: [deploymentSetId], references: [id], onDelete: Cascade)
+  sector                    String
+  regime                    String
+  selectedExperimentId      String?
+  selectedExperiment        StrategyExperiment?          @relation("DeploymentRouteExperiment", fields: [selectedExperimentId], references: [id], onDelete: SetNull)
   selectedStrategyVersionId String?
-  selectedStrategyVersion StrategyVersion?           @relation("DeploymentRouteVersion", fields: [selectedStrategyVersionId], references: [id], onDelete: SetNull)
-  allocationPct         Float?
-  status                StrategyAllocationCellStatus @default(SIT_OUT)
-  evidenceStatus        String?
-  notes                 String?
-  createdAt             DateTime                     @default(now())
-  updatedAt             DateTime                     @updatedAt
+  selectedStrategyVersion   StrategyVersion?             @relation("DeploymentRouteVersion", fields: [selectedStrategyVersionId], references: [id], onDelete: SetNull)
+  allocationPct             Float?
+  status                    StrategyAllocationCellStatus @default(SIT_OUT)
+  evidenceStatus            String?
+  notes                     String?
+  createdAt                 DateTime                     @default(now())
+  updatedAt                 DateTime                     @updatedAt
 
   @@unique([deploymentSetId, sector, regime])
   @@index([userId, status])
@@ -917,22 +1085,22 @@ model StrategyDeploymentRoute {
 }
 
 model StrategyCapitalAllocation {
-  id                  String                   @id @default(uuid())
-  userId              String
-  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deploymentSetId     String
-  deploymentSet       StrategyDeploymentSet    @relation(fields: [deploymentSetId], references: [id], onDelete: Cascade)
-  experimentId        String
-  experiment          StrategyExperiment       @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  strategyVersionId   String?
-  strategyVersion     StrategyVersion?         @relation(fields: [strategyVersionId], references: [id], onDelete: SetNull)
-  method              StrategyAllocationMethod @default(EQUAL_WEIGHT)
-  assignedCapitalPct  Float                    @default(0)
-  maxAllocationPct    Float                    @default(100)
-  status              String                   @default("PENDING")
-  notes               String?
-  createdAt           DateTime                 @default(now())
-  updatedAt           DateTime                 @updatedAt
+  id                 String                   @id @default(uuid())
+  userId             String
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deploymentSetId    String
+  deploymentSet      StrategyDeploymentSet    @relation(fields: [deploymentSetId], references: [id], onDelete: Cascade)
+  experimentId       String
+  experiment         StrategyExperiment       @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  strategyVersionId  String?
+  strategyVersion    StrategyVersion?         @relation(fields: [strategyVersionId], references: [id], onDelete: SetNull)
+  method             StrategyAllocationMethod @default(EQUAL_WEIGHT)
+  assignedCapitalPct Float                    @default(0)
+  maxAllocationPct   Float                    @default(100)
+  status             String                   @default("PENDING")
+  notes              String?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@unique([deploymentSetId, experimentId])
   @@index([userId, status])
@@ -981,80 +1149,80 @@ model StrategyAllocationAuditLog {
 }
 
 model WalkForwardRun {
-  id              String               @id @default(uuid())
-  userId          String
-  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  experimentId    String
-  experiment      StrategyExperiment   @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  mode            String
-  trainStart      DateTime?
-  trainEnd        DateTime?
-  validateStart   DateTime?
-  validateEnd     DateTime?
-  testStart       DateTime?
-  testEnd         DateTime?
-  oosReturn       Float?
-  oosSharpe       Float?
-  oosDrawdown     Float?
-  overfitRatio    Float?
-  returnDecay     Float?
-  stabilityScore  Float?
-  summaryJson     Json?
-  createdAt       DateTime             @default(now())
-  segments        WalkForwardSegment[]
-  metrics         WalkForwardMetric[]
+  id             String               @id @default(uuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experimentId   String
+  experiment     StrategyExperiment   @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  mode           String
+  trainStart     DateTime?
+  trainEnd       DateTime?
+  validateStart  DateTime?
+  validateEnd    DateTime?
+  testStart      DateTime?
+  testEnd        DateTime?
+  oosReturn      Float?
+  oosSharpe      Float?
+  oosDrawdown    Float?
+  overfitRatio   Float?
+  returnDecay    Float?
+  stabilityScore Float?
+  summaryJson    Json?
+  createdAt      DateTime             @default(now())
+  segments       WalkForwardSegment[]
+  metrics        WalkForwardMetric[]
 
   @@index([userId, createdAt])
   @@index([experimentId, createdAt])
 }
 
 model WalkForwardSegment {
-  id              String         @id @default(uuid())
+  id               String         @id @default(uuid())
   walkForwardRunId String
-  walkForwardRun WalkForwardRun @relation(fields: [walkForwardRunId], references: [id], onDelete: Cascade)
-  segmentIndex    Int
-  phase           String
-  startDate       DateTime?
-  endDate         DateTime?
-  returnPct       Float?
-  sharpe          Float?
-  maxDrawdown     Float?
-  tradeCount      Int?
-  metricsJson     Json?
-  createdAt       DateTime       @default(now())
+  walkForwardRun   WalkForwardRun @relation(fields: [walkForwardRunId], references: [id], onDelete: Cascade)
+  segmentIndex     Int
+  phase            String
+  startDate        DateTime?
+  endDate          DateTime?
+  returnPct        Float?
+  sharpe           Float?
+  maxDrawdown      Float?
+  tradeCount       Int?
+  metricsJson      Json?
+  createdAt        DateTime       @default(now())
 
   @@index([walkForwardRunId, segmentIndex])
   @@index([phase])
 }
 
 model WalkForwardMetric {
-  id              String         @id @default(uuid())
+  id               String         @id @default(uuid())
   walkForwardRunId String
-  walkForwardRun WalkForwardRun @relation(fields: [walkForwardRunId], references: [id], onDelete: Cascade)
-  metricName      String
-  metricValue     Float?
-  metadata        Json?
-  createdAt       DateTime       @default(now())
+  walkForwardRun   WalkForwardRun @relation(fields: [walkForwardRunId], references: [id], onDelete: Cascade)
+  metricName       String
+  metricValue      Float?
+  metadata         Json?
+  createdAt        DateTime       @default(now())
 
   @@index([walkForwardRunId])
   @@index([metricName])
 }
 
 model StrategyStressResult {
-  id             String             @id @default(uuid())
-  userId         String
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  experimentId   String
-  experiment     StrategyExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  simulationCount Int               @default(500)
-  bestReturn     Float?
-  medianReturn   Float?
-  worstReturn    Float?
-  riskOfRuin     Float?
+  id                    String             @id @default(uuid())
+  userId                String
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experimentId          String
+  experiment            StrategyExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  simulationCount       Int                @default(500)
+  bestReturn            Float?
+  medianReturn          Float?
+  worstReturn           Float?
+  riskOfRuin            Float?
   probability20Drawdown Float?
-  expectedCagr   Float?
-  resultJson     Json?
-  createdAt      DateTime           @default(now())
+  expectedCagr          Float?
+  resultJson            Json?
+  createdAt             DateTime           @default(now())
 
   @@index([userId, createdAt])
   @@index([experimentId, createdAt])
@@ -1183,7 +1351,7 @@ model StrategyParameterSweepResult {
 }
 
 model ApprovalRequest {
-  id                   String         @id @default(uuid())
+  id                   String                 @id @default(uuid())
   symbol               String
   side                 TradeSide
   quantity             Float
@@ -1194,20 +1362,20 @@ model ApprovalRequest {
   opportunityScore     Float?
   riskLevel            String?
   recommendation       String?
-  status               ApprovalStatus @default(PENDING)
-  approvalMode         ApprovalMode   @default(MANUAL_APPROVAL)
+  status               ApprovalStatus         @default(PENDING)
+  approvalMode         ApprovalMode           @default(MANUAL_APPROVAL)
   reason               String?
   preTradeAnalysisJson Json?
   safetyViolationsJson Json?
   newsEventsJson       Json?
   openaiReasoningJson  Json?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
   decidedAt            DateTime?
   decisionNote         String?
   raw                  Json?
   userId               String
-  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   executionAudits      BrokerExecutionAudit[]
   brokerOrders         BrokerOrder[]
 
@@ -1247,21 +1415,21 @@ model ProposedTrade {
 }
 
 model NotificationChannel {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel   String
-  enabled   Boolean  @default(false)
-  verified  Boolean  @default(false)
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel          String
+  enabled          Boolean         @default(false)
+  verified         Boolean         @default(false)
   verificationCode String?
   telegramBotToken String?
   telegramChatId   String?
-  lastDeliveryAt DateTime?
-  failureCount   Int      @default(0)
-  config    Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deliveries AlertDelivery[]
+  lastDeliveryAt   DateTime?
+  failureCount     Int             @default(0)
+  config           Json?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deliveries       AlertDelivery[]
 
   @@unique([userId, channel])
   @@index([userId])
@@ -1295,14 +1463,384 @@ model PortfolioState {
   @@index([userId, updatedAt])
 }
 
-model MarketDataSnapshot {
-  id           String   @id @default(uuid())
+model PortfolioProposal {
+  id                   String                      @id @default(uuid())
+  userId               String
+  user                 User                        @relation("PortfolioProposalOwner", fields: [userId], references: [id], onDelete: Cascade)
+  parentProposalId     String?
+  parentProposal       PortfolioProposal?          @relation("PortfolioProposalRevisions", fields: [parentProposalId], references: [id], onDelete: SetNull)
+  revisions            PortfolioProposal[]         @relation("PortfolioProposalRevisions")
+  title                String
+  objective            String
+  provider             String
+  executionMode        String?
+  proposalJson         Json
+  simulationJson       Json
+  explanationJson      Json?
+  evidenceJson         Json?
+  sourcePrompt         String?
+  aiFeature            String                      @default("portfolioScenarioProposal")
+  aiModel              String?
+  promptVersion        String                      @default("v1")
+  simulationVersion    String                      @default("portfolio-snapshot-v1")
+  snapshotTimestamp    DateTime?
+  marketPriceTimestamp DateTime?
+  confidence           Float?
+  createdAt            DateTime                    @default(now())
+  decisions            PortfolioProposalDecision[]
+
+  @@index([userId, createdAt])
+  @@index([userId, provider, createdAt])
+  @@index([parentProposalId])
+}
+
+model PortfolioProposalDecision {
+  id           String            @id @default(uuid())
+  proposalId   String
+  proposal     PortfolioProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  actorUserId  String
+  actor        User              @relation("PortfolioProposalDecisionActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+  status       ApprovalStatus    @default(PENDING)
+  reason       String?
+  metadataJson Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([proposalId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ResearchProject {
+  id           String             @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String
+  researchType String
+  status       String             @default("DRAFT")
+  description  String?
+  scopeJson    Json
+  archivedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  reports      ResearchReport[]
+  notes        ResearchNote[]
+  questions    ResearchQuestion[]
+  theses       ResearchThesis[]
+
+  @@unique([userId, slug])
+  @@index([userId, status, updatedAt])
+}
+
+model ResearchReport {
+  id                String             @id @default(uuid())
+  projectId         String
+  project           ResearchProject    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportType        String
+  title             String
+  executiveSummary  String
+  structuredContent Json
+  evidenceSnapshot  Json
+  confidence        Float
+  dataFreshness     Json
+  affectedEntities  Json
+  limitationsJson   Json
+  promptTemplateId  String?
+  promptVersion     String
+  model             String?
+  aiInvocationId    String?
+  versionNumber     Int
+  createdAt         DateTime           @default(now())
+  answeredQuestions ResearchQuestion[]
+
+  @@unique([projectId, reportType, versionNumber])
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+model ResearchNote {
+  id        String          @id @default(uuid())
+  projectId String
+  project   ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  noteType  String          @default("USER_NOTE")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([projectId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model ResearchQuestion {
+  id             String          @id @default(uuid())
+  projectId      String
+  project        ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question       String
+  answerReportId String?
+  answerReport   ResearchReport? @relation(fields: [answerReportId], references: [id], onDelete: SetNull)
+  status         String          @default("OPEN")
+  createdAt      DateTime        @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([userId, status])
+}
+
+model ResearchThesis {
+  id                  String          @id @default(uuid())
+  projectId           String
+  project             ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statement           String
+  status              String
+  confidence          Float
+  supportingEvidence  Json
+  opposingEvidence    Json
+  unresolvedQuestions Json
+  affectedEntities    Json
+  versionNumber       Int
+  createdAt           DateTime        @default(now())
+
+  @@unique([projectId, versionNumber])
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+model MatrixReplaySnapshot {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deploymentSetId  String?
+  period           String?
+  symbolsJson      Json
+  replayConfigJson Json
+  resultJson       Json
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, deploymentSetId, createdAt])
+}
+
+model MemoryEvent {
+  id             String               @id @default(uuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       MemoryCategory
+  eventType      String
+  title          String
+  summary        String
+  structuredData Json
+  sourceType     String
+  sourceId       String
+  sourceVersion  String?
+  importance     Int
+  confidence     Float?
+  occurredAt     DateTime
+  recordedAt     DateTime             @default(now())
+  retentionState MemoryRetentionState @default(ACTIVE)
+  excludedFromAi Boolean              @default(false)
+  contentHash    String
+  dedupeKey      String
+  createdByType  MemoryCreatedByType  @default(SYSTEM)
+  createdById    String?
+  schemaVersion  String               @default("1")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  links          MemoryLink[]
+  feedback       MemoryFeedback[]
+  embedding      MemoryEmbedding?
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, occurredAt])
+  @@index([userId, category, occurredAt])
+  @@index([userId, eventType, occurredAt])
+  @@index([userId, importance, occurredAt])
+  @@index([userId, retentionState, occurredAt])
+  @@index([sourceType, sourceId])
+  @@index([contentHash])
+}
+
+model MemoryEmbedding {
+  id                     String                @id @default(uuid())
+  userId                 String
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryEventId          String                @unique
+  memoryEvent            MemoryEvent           @relation(fields: [memoryEventId], references: [id], onDelete: Cascade)
+  embeddingProvider      String
+  embeddingModel         String
+  embeddingVersion       String
+  documentBuilderVersion String
+  dimensions             Int
+  sourceContentHash      String
+  documentPreview        String?
+  status                 MemoryEmbeddingStatus @default(PENDING)
+  attemptCount           Int                   @default(0)
+  lastErrorCategory      String?
+  lastAttemptAt          DateTime?
+  nextAttemptAt          DateTime?
+  claimedAt              DateTime?
+  claimToken             String?
+  embeddedAt             DateTime?
+  embedding              Unsupported("vector")?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  @@index([userId, status, nextAttemptAt])
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([embeddingProvider, embeddingModel, embeddingVersion])
+  @@index([sourceContentHash])
+}
+
+model MemoryLink {
+  id               String      @id @default(uuid())
+  memoryEventId    String
+  memoryEvent      MemoryEvent @relation(fields: [memoryEventId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType       String
+  entityId         String
+  relationshipType String
+  createdAt        DateTime    @default(now())
+
+  @@unique([memoryEventId, entityType, entityId, relationshipType])
+  @@index([userId, entityType, entityId, createdAt])
+  @@index([userId, relationshipType, createdAt])
+}
+
+model MemoryFeedback {
+  id            String             @id @default(uuid())
+  memoryEventId String
+  memoryEvent   MemoryEvent        @relation(fields: [memoryEventId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedbackType  MemoryFeedbackType
+  comment       String?
+  createdAt     DateTime           @default(now())
+
+  @@index([memoryEventId, createdAt])
+  @@index([userId, feedbackType, createdAt])
+}
+
+model MemoryRetrievalAudit {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestingFeature    String
+  queryHash            String
+  intent               String
+  memoryMode           String
+  filters              Json
+  candidateCounts      Json
+  finalMemoryIds       Json
+  scoreRange           Json
+  retrievalStatus      String
+  latencyMs            Int
+  vectorSearchUsed     Boolean  @default(false)
+  fallbackUsed         Boolean  @default(false)
+  rankingVersion       String
+  contextTokenEstimate Int
+  profileVersion       Int?
+  preferenceIds        Json     @default("[]")
+  patternIds           Json     @default("[]")
+  createdAt            DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, intent, createdAt])
+  @@index([retrievalStatus, createdAt])
+  @@index([rankingVersion, createdAt])
+}
+
+model UserMemoryProfile {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version        Int
+  status         String
+  summary        String
+  evidenceCount  Int
+  confidence     Float
+  generatedAt    DateTime @default(now())
+  lastReviewedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, version])
+  @@index([userId, status, generatedAt])
+}
+
+model UserPreference {
+  id              String   @id @default(uuid())
+  userId          String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferenceType  String
+  key             String
+  value           Json
+  confidence      Float
+  evidenceCount   Int
+  evidenceIds     Json     @default("[]")
+  contradictingIds Json    @default("[]")
+  source          String
+  status          String
+  firstObservedAt DateTime
+  lastObservedAt  DateTime
+  confirmedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, preferenceType, status])
+  @@index([userId, key, updatedAt])
+}
+
+model UserBehaviorPattern {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patternType            String
+  title                  String
+  description            String
+  structuredData         Json
+  confidence             Float
+  sampleSize             Int
+  supportingMemoryIds    Json
+  contradictingMemoryIds Json
+  firstObservedAt        DateTime
+  lastObservedAt         DateTime
+  status                 String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([userId, patternType, status])
+  @@index([userId, updatedAt])
+}
+
+model MemoryPersonalizationSetting {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalMode             String   @default("EVIDENCE_ONLY")
+  strategyMode           String   @default("EVIDENCE_ONLY")
+  portfolioMode          String   @default("EVIDENCE_ONLY")
+  matrixMode             String   @default("EVIDENCE_ONLY")
+  researchMode           String   @default("EVIDENCE_ONLY")
+  inferredRequiresReview Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+  createdAt              DateTime @default(now())
+}
+
+model MarketDataSnapshot {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   symbol       String
   scope        String
-  rangeKey     String   @default("QUOTE")
-  timeframeKey String   @default("")
+  rangeKey     String    @default("QUOTE")
+  timeframeKey String    @default("")
   market       String?
   currency     String?
   interval     String?
@@ -1310,8 +1848,8 @@ model MarketDataSnapshot {
   source       String?
   lastUpdated  DateTime?
   payload      Json
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@unique([userId, symbol, scope, rangeKey, timeframeKey])
   @@index([userId, updatedAt])
@@ -1675,31 +2213,31 @@ model BrokerExecutionAudit {
 }
 
 model BrokerOrder {
-  id            String              @id @default(uuid())
-  userId        String
-  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  approvalId    String?
-  approval      ApprovalRequest?    @relation(fields: [approvalId], references: [id], onDelete: SetNull)
-  broker        String
-  brokerOrderId String?
-  clientOrderId String
-  mode          BrokerExecutionMode
-  symbol        String
-  side          TradeSide
-  orderType     OrderType
-  quantity      Float
-  filledQuantity Float              @default(0)
-  remainingQuantity Float           @default(0)
-  limitPrice    Float?
-  status        String
-  submittedAt   DateTime?
-  lastUpdatedAt DateTime
-  lastSyncedAt  DateTime?
-  metadata      Json?
-  fills         BrokerFill[]
-  events        BrokerOrderEvent[]
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvalId        String?
+  approval          ApprovalRequest?    @relation(fields: [approvalId], references: [id], onDelete: SetNull)
+  broker            String
+  brokerOrderId     String?
+  clientOrderId     String
+  mode              BrokerExecutionMode
+  symbol            String
+  side              TradeSide
+  orderType         OrderType
+  quantity          Float
+  filledQuantity    Float               @default(0)
+  remainingQuantity Float               @default(0)
+  limitPrice        Float?
+  status            String
+  submittedAt       DateTime?
+  lastUpdatedAt     DateTime
+  lastSyncedAt      DateTime?
+  metadata          Json?
+  fills             BrokerFill[]
+  events            BrokerOrderEvent[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@unique([userId, clientOrderId])
   @@index([userId, status])
@@ -1725,9 +2263,9 @@ model BrokerFill {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
+  @@unique([userId, executionId])
   @@index([userId, filledAt])
   @@index([userId, brokerOrderId])
-  @@unique([userId, executionId])
 }
 
 model BrokerOrderEvent {

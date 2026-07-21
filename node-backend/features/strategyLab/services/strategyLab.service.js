@@ -1,4 +1,5 @@
 const { compileStrategySettings } = require("./strategyCompiler");
+const { validateStrategyDsl } = require("./strategyDslValidator");
 const { computeDeploymentReadiness } = require("./deploymentReadiness");
 const { runStrategyRobustness } = require("./strategyRobustnessService");
 const { createWalkForwardService } = require("./walkForwardService");
@@ -234,6 +235,7 @@ async function createStrategyVersion(db, userId, experiment, changeNote = "Saved
         dslValidation: validation,
         deploymentReadiness: settings.deploymentReadiness || null,
         robustness: settings.robustness || null,
+        ...(options.evidenceJson || {}),
       },
       changeNote,
     },
@@ -925,8 +927,25 @@ function validateDateRange(startDate, endDate) {
   }
 }
 
+function resolveExecutableStrategyJson(settings = {}, experiment = {}) {
+  if (settings.strategyJson) {
+    try {
+      validateStrategyDsl(settings.strategyJson);
+      return settings.strategyJson;
+    } catch (_error) {
+      // Older saved experiments may contain a partial executable object. Recompile
+      // from the builder settings so Python receives the full canonical contract.
+    }
+  }
+
+  return compileStrategySettings(settings, {
+    description: experiment.description,
+  }).strategyJson;
+}
+
 function buildExperimentBacktestConfig(experiment, body = {}) {
   const settings = experiment.settingsJson || {};
+  const strategyJson = resolveExecutableStrategyJson(settings, experiment);
   const symbols = getBacktestSymbols({
     symbols: body.symbols || body.symbolList || settings.symbols,
     symbol: body.symbol || settings.symbol || "AAPL",
@@ -973,9 +992,7 @@ function buildExperimentBacktestConfig(experiment, body = {}) {
     strategy: experiment.name,
     strategyConfig: {
       ...settings,
-      strategyJson: settings.strategyJson || compileStrategySettings(settings, {
-        description: experiment.description,
-      }).strategyJson,
+      strategyJson,
     },
     horizonProfile: {
       key: "STRATEGY_EXPERIMENT",
@@ -1278,9 +1295,14 @@ function buildParameterSweepConfig(body = {}) {
   const symbols = getBacktestSymbols(body);
   const totalBacktests = totalCombinations * symbols.length;
 
-  if (totalBacktests > maxCombinations) {
+  if (totalCombinations > maxCombinations) {
     throw new Error(
-      `Parameter sweep would run ${totalBacktests} backtests across ${symbols.length} symbols. Increase step sizes, reduce symbols, or raise maxCombinations up to 1000.`
+      `Parameter sweep contains ${totalCombinations} parameter combinations, above the configured limit of ${maxCombinations}. Increase step sizes or raise maxCombinations up to 1000.`
+    );
+  }
+  if (totalBacktests > 25000) {
+    throw new Error(
+      `Parameter sweep would evaluate ${totalBacktests} combination-symbol pairs, above the safety limit of 25000. Increase step sizes or reduce symbols.`
     );
   }
 
@@ -1542,6 +1564,7 @@ function getStrategyComparisonWinner(leftExperiment, rightExperiment, leftRun, r
   return {
     buildExperimentBacktestConfig,
     buildStrategyComparisonMetrics,
+    buildStrategyExperimentSettings,
     buildStrategyExperimentCreateData,
     buildStrategyExperimentUpdateData,
     buildStrategyRunData,

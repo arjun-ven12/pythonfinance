@@ -1,9 +1,14 @@
 import StockPriceChart from "../stocks/StockPriceChart";
 import { formatExchange } from "../../utils/marketMetadata";
+import {
+  formatNumber,
+  formatNumericValue,
+  formatPercent,
+} from "../../utils/numberFormat";
 
 function formatPercentValue(value) {
   const numericValue = Number(value || 0);
-  return `${(numericValue * 100).toFixed(1)}%`;
+  return formatPercent(numericValue, { scale: 100 });
 }
 
 export function OpenAiReasoningPanel({ reasoning }) {
@@ -35,7 +40,7 @@ export function OpenAiReasoningPanel({ reasoning }) {
         </div>
         <div>
           <dt>Confidence Adj.</dt>
-          <dd>{Number(reasoning.confidence_adjustment || 0)}</dd>
+          <dd>{formatNumber(reasoning.confidence_adjustment || 0)}</dd>
         </div>
         <div>
           <dt>Allows Trade</dt>
@@ -93,7 +98,7 @@ export function NewsHealthPanel({ newsFilter }) {
               </div>
               <div className="news-health-stats">
                 <strong>{provider.eventCount || 0} events</strong>
-                <span>{Number(provider.latencyMs || 0).toFixed(0)} ms</span>
+                <span>{formatNumber(provider.latencyMs || 0)} ms</span>
               </div>
               {provider.errors?.length > 0 && (
                 <p>{provider.errors.join(" ")}</p>
@@ -126,7 +131,7 @@ export function ConfidenceBreakdownPanel({ breakdown }) {
         {rows.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>
-            <dd>{Number(value || 0).toFixed(2)}</dd>
+            <dd>{formatNumber(value || 0)}</dd>
           </div>
         ))}
       </dl>
@@ -153,7 +158,7 @@ export function PortfolioFitPanel({ fit }) {
       <div className="portfolio-fit-header">
         <div>
           <p className="eyebrow">Position-aware fit</p>
-          <strong>{Number(fit.portfolio_fit_score || 0).toFixed(0)}/100</strong>
+          <strong>{formatNumber(fit.portfolio_fit_score || 0)}/100</strong>
         </div>
         <span className={`recommendation-pill ${recommendation.toLowerCase()}`}>
           {recommendation.replaceAll("_", " ")}
@@ -163,7 +168,7 @@ export function PortfolioFitPanel({ fit }) {
       <dl className="detail-stats">
         <div>
           <dt>Adjusted Qty</dt>
-          <dd>{Number(fit.adjusted_quantity || 0)}</dd>
+          <dd>{formatNumber(fit.adjusted_quantity || 0)}</dd>
         </div>
         <div>
           <dt>Exposure</dt>
@@ -186,7 +191,7 @@ export function PortfolioFitPanel({ fit }) {
         </div>
         <div>
           <dt>Stop Risk</dt>
-          <dd>${Number(stopRisk.risk_amount || 0).toFixed(2)}</dd>
+          <dd>${formatNumber(stopRisk.risk_amount || 0)}</dd>
         </div>
         <div>
           <dt>Averaging</dt>
@@ -260,11 +265,11 @@ export default function StockDetailDrawer({
           </div>
           <div>
             <dt>Score</dt>
-            <dd>{stock.opportunity_score}</dd>
+            <dd>{formatNumericValue(stock.opportunity_score)}</dd>
           </div>
           <div>
             <dt>Confidence</dt>
-            <dd>{stock.confidence}</dd>
+            <dd>{formatNumericValue(stock.confidence)}</dd>
           </div>
           <div>
             <dt>Backtest Return</dt>
@@ -317,15 +322,15 @@ export default function StockDetailDrawer({
             <dl className="detail-stats">
               <div>
                 <dt>Quantity</dt>
-                <dd>{paperPosition.quantity}</dd>
+                <dd>{formatNumber(paperPosition.quantity)}</dd>
               </div>
               <div>
                 <dt>Average Price</dt>
-                <dd>{Number(paperPosition.avg_price).toFixed(2)}</dd>
+                <dd>{formatNumber(paperPosition.avg_price)}</dd>
               </div>
               <div>
                 <dt>Last Price</dt>
-                <dd>{Number(paperPosition.last_price).toFixed(2)}</dd>
+                <dd>{formatNumber(paperPosition.last_price)}</dd>
               </div>
             </dl>
           ) : (

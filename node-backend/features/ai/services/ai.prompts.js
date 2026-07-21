@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 const DEFAULT_PROMPT_DIR = path.join(__dirname, "..", "..", "..", "..", "prompts");
 const promptCache = new Map();
@@ -27,6 +28,24 @@ function interpolatePrompt(template, variables = {}) {
   );
 }
 
+function hashContent(content) {
+  return crypto.createHash("sha256").update(String(content || "")).digest("hex");
+}
+
+function getPromptTemplateId(template) {
+  if (typeof template === "string") return template;
+  if (template?.type === "file") return template.file;
+  if (template?.type === "inline") return "inline";
+  return "unknown";
+}
+
+function getPromptVersion(template) {
+  if (template && typeof template === "object" && template.version) {
+    return String(template.version);
+  }
+  return "v1";
+}
+
 function createPromptRegistry({ promptDir = DEFAULT_PROMPT_DIR } = {}) {
   return {
     buildPrompt({ template, variables = {} }) {
@@ -47,6 +66,16 @@ function createPromptRegistry({ promptDir = DEFAULT_PROMPT_DIR } = {}) {
       }
 
       throw new Error("Unsupported prompt template configuration.");
+    },
+
+    describePrompt({ template, variables = {} }) {
+      const content = this.buildPrompt({ template, variables });
+      return {
+        content,
+        templateId: getPromptTemplateId(template),
+        version: getPromptVersion(template),
+        hash: hashContent(content),
+      };
     },
   };
 }

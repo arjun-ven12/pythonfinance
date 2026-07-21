@@ -401,6 +401,138 @@ function mergeAllocationMatrixIntoSettings(settings = {}, allocationMatrix = {})
   return nextSettings;
 }
 
+function getEnvelopeFromSettings(settings = {}) {
+  return settings?.strategyJson?.executable?.envelope || {};
+}
+
+function buildCanonicalMatrixRouteRows({
+  envelope = {},
+  allocationMatrix = {},
+  existingRoutes = [],
+}) {
+  const matrixKeys = Object.keys(allocationMatrix || {});
+  const parsedKeys = matrixKeys.map((key) => {
+    const [sector, regime] = String(key).split("::");
+    return {
+      key,
+      sector: String(sector || "").trim(),
+      regime: String(regime || "").trim(),
+    };
+  });
+  const sectors = [
+    ...new Set([
+      ...((Array.isArray(envelope?.sectors) ? envelope.sectors : []).map((item) =>
+        String(item || "").trim()
+      )),
+      ...parsedKeys.map((item) => item.sector),
+    ].filter(Boolean)),
+  ];
+  const regimes = [
+    ...new Set([
+      ...((Array.isArray(envelope?.regimes) ? envelope.regimes : []).map((item) =>
+        String(item || "").trim()
+      )),
+      ...parsedKeys.map((item) => item.regime),
+    ].filter(Boolean)),
+  ];
+  const existingRouteByKey = new Map(
+    (existingRoutes || []).map((route) => [
+      normalizeMatrixKey(route.sector, route.regime),
+      route,
+    ])
+  );
+
+  const rows = [];
+  for (const sector of sectors) {
+    for (const regime of regimes) {
+      const key = normalizeMatrixKey(sector, regime);
+      const entry = allocationMatrix?.[key] || null;
+      const existing = existingRouteByKey.get(key) || null;
+      const hasStrategy = Boolean(entry?.experimentId);
+      const status = hasStrategy
+        ? String(entry?.status || (entry?.active === false ? "PENDING" : "ACTIVE")).toUpperCase()
+        : "SIT_OUT";
+      rows.push({
+        sector,
+        regime,
+        selectedExperimentId: hasStrategy ? entry.experimentId : null,
+        selectedStrategyVersionId: hasStrategy ? entry.strategyVersionId || null : null,
+        allocationPct: hasStrategy
+          ? round(entry?.allocationPct ?? existing?.allocationPct ?? 0) || 0
+          : 0,
+        status,
+        evidenceStatus:
+          status === "ACTIVE"
+            ? "Validated"
+            : status === "PENDING"
+              ? "Pending evidence"
+              : "Sit out",
+      });
+    }
+  }
+
+  return rows;
+}
+
+async function syncCanonicalDeploymentRoutes(transaction, {
+  userId,
+  ownerExperimentId = null,
+  ownerStrategyVersionId = null,
+  settings = {},
+  allocationMatrix = {},
+}) {
+  const deploymentSet = await transaction.strategyDeploymentSet.upsert({
+    where: { userId },
+    update: {
+      ownerExperimentId,
+      ownerStrategyVersionId,
+    },
+    create: {
+      userId,
+      ownerExperimentId,
+      ownerStrategyVersionId,
+    },
+  });
+
+  const existingRoutes = await transaction.strategyDeploymentRoute.findMany({
+    where: {
+      deploymentSetId: deploymentSet.id,
+      userId,
+    },
+  });
+
+  const rows = buildCanonicalMatrixRouteRows({
+    envelope: getEnvelopeFromSettings(settings),
+    allocationMatrix,
+    existingRoutes,
+  });
+
+  await transaction.strategyDeploymentRoute.deleteMany({
+    where: {
+      deploymentSetId: deploymentSet.id,
+      userId,
+    },
+  });
+
+  if (rows.length) {
+    await transaction.strategyDeploymentRoute.createMany({
+      data: rows.map((row) => ({
+        userId,
+        deploymentSetId: deploymentSet.id,
+        sector: row.sector,
+        regime: row.regime,
+        selectedExperimentId: row.selectedExperimentId,
+        selectedStrategyVersionId: row.selectedStrategyVersionId,
+        allocationPct: row.allocationPct,
+        status: row.status,
+        evidenceStatus: row.evidenceStatus,
+      })),
+    });
+  }
+
+  return deploymentSet;
+}
+
 function buildMembershipSummary(cells = []) {
   const byExperiment = new Map();
 
@@ -862,7 +994,7 @@ async function assignStrategyToActiveSet({
   createStrategyVersion,
 }) {
   const activeStrategy = await readActiveStrategyConfig(userId);
-  const [targetExperimentRecord, ownerExperimentRecord] = await prisma.run((db) =>
+  const [targetExperimentRecord, deploymentSetRecord] = await prisma.run((db) =>
     Promise.all([
       db.strategyExperiment.findFirst({
         where: { id: targetExperimentId, userId },
@@ -873,8 +1005,28 @@ async function assignStrategyToActiveSet({
           },
         },
       }),
-      activeStrategy?.experimentId
-        ? db.strategyExperiment.findFirst({
+      db.strategyDeploymentSet?.findUnique
+        ? db.strategyDeploymentSet.findUnique({
+            where: { userId },
+            include: {
+              ownerExperiment: {
+                include: {
+                  versions: {
+                    orderBy: { version: "desc" },
+                    take: 5,
+                  },
+                },
+              },
+            },
+          })
+        : Promise.resolve(null),
+    ])
+  );
+  const configuredOwnerRecord =
+    deploymentSetRecord?.ownerExperiment ||
+    (activeStrategy?.experimentId
+      ? await prisma.run((db) =>
+          db.strategyExperiment.findFirst({
             where: { id: activeStrategy.experimentId, userId },
             include: {
               versions: {
@@ -883,11 +1035,10 @@ async function assignStrategyToActiveSet({
               },
             },
           })
-        : Promise.resolve(null),
-    ])
-  );
+        )
+      : null);
   const targetExperiment = strategyStorage.hydrateStrategyExperimentRecord(targetExperimentRecord);
-  const ownerExperiment = strategyStorage.hydrateStrategyExperimentRecord(ownerExperimentRecord);
+  const ownerExperiment = strategyStorage.hydrateStrategyExperimentRecord(configuredOwnerRecord);
 
   if (!targetExperiment) {
     throw new Error("Strategy experiment not found.");
@@ -922,9 +1073,10 @@ async function assignStrategyToActiveSet({
   });
 
   const owner = ownerExperiment || targetExperiment;
-  const ownerWasActive = activeStrategy?.experimentId
-    ? activeStrategy.experimentId === owner.id
-    : true;
+  const ownerWasActive =
+    deploymentSetRecord?.ownerExperimentId === owner.id ||
+    activeStrategy?.experimentId === owner.id ||
+    (!deploymentSetRecord?.ownerExperimentId && !activeStrategy?.experimentId);
   const currentMatrix = {
     ...getAllocationMatrixFromExperiment(owner, owner.versions?.[0] || null),
   };
@@ -1022,6 +1174,13 @@ async function assignStrategyToActiveSet({
           readiness: activeStrategy?.readiness || null,
           reasonNote: `Assigned ${targetExperiment.name} into ${owner.name} active set`,
           action: "ACTIVE_SET_ASSIGNED",
+        });
+        await syncCanonicalDeploymentRoutes(transaction, {
+          userId,
+          ownerExperimentId: owner.id,
+          ownerStrategyVersionId: nextVersion.id,
+          settings: nextSettings,
+          allocationMatrix: currentMatrix,
         });
       }
 
@@ -1182,6 +1341,13 @@ async function removeStrategyFromActiveSet({
         readiness: activeStrategy?.readiness || null,
         reasonNote: "Removed contexts from active set",
         action: "ACTIVE_SET_REMOVED",
+      });
+      await syncCanonicalDeploymentRoutes(transaction, {
+        userId,
+        ownerExperimentId: owner.id,
+        ownerStrategyVersionId: nextVersion.id,
+        settings: nextSettings,
+        allocationMatrix: currentMatrix,
       });
 
       return {

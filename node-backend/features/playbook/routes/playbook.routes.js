@@ -4,6 +4,7 @@ const createPlaybookController = require("../controllers/playbook.controller");
 function createPlaybookRouter(deps) {
   const router = express.Router();
   const controller = createPlaybookController(deps);
+  const aiRateLimiter = deps.aiRateLimiter || ((_req, _res, next) => next());
 
   router.get("/playbook", controller.dashboard);
   router.get("/playbooks", controller.list);
@@ -19,7 +20,11 @@ function createPlaybookRouter(deps) {
   router.post("/playbooks/:id/evidence/rebuild", controller.rebuildEvidence);
   router.get("/playbook/export", controller.exportLegacy);
   router.get("/playbooks/:id/export", controller.exportById);
-  router.post("/playbooks/:id/ai-recommendations", controller.generateAiRecommendation);
+  router.post(
+    "/playbooks/:id/ai-recommendations",
+    aiRateLimiter,
+    controller.generateAiRecommendation
+  );
   router.post("/playbook-recommendations/:id/accept", controller.acceptRecommendation);
   router.post("/playbook-recommendations/:id/reject", controller.rejectRecommendation);
   router.post(

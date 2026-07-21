@@ -1,5 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE_URL, apiFetch as fetch } from "../../../services/apiClient";
+import {
+  apiRequest,
+  cancelRequestGroup,
+  REQUEST_PRIORITY,
+} from "../../../services/apiRequestManager";
+import {
+  serializeStrategyBuilderState,
+  validateStrategyJson,
+} from "../utils/strategyJsonContract";
+import {
+  buildStrategyCopilotDraftRequest,
+  createStrategyCopilotPreferences,
+  validateStrategyCopilotDraftRequest,
+} from "../strategyCopilotPreferences";
 
 export default function useStrategyLab({
   activeStrategyStorageKey,
@@ -48,8 +62,19 @@ export default function useStrategyLab({
     error: "",
     result: null,
   });
+  const [strategyCopilotPrompt, setStrategyCopilotPrompt] = useState("");
+  const [strategyCopilotPreferences, setStrategyCopilotPreferences] = useState(
+    createStrategyCopilotPreferences
+  );
+  const [strategyCopilotCompareTargetId, setStrategyCopilotCompareTargetId] = useState("");
+  const [strategyCopilotCompareVersionId, setStrategyCopilotCompareVersionId] = useState("");
+  const [strategyCopilotDraft, setStrategyCopilotDraft] = useState({
+    loading: false,
+    error: "",
+    mode: "draft",
+    result: null,
+  });
   const previewRequestIdRef = useRef(0);
-  const previewAbortRef = useRef(null);
   const [strategySweepProgress, setStrategySweepProgress] = useState({
     percent: 0,
     label: "Idle",
@@ -57,9 +82,10 @@ export default function useStrategyLab({
 
   const fetchStrategyExperiments = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-experiments`);
-      if (!response.ok) throw new Error("Unable to load strategy experiments");
-      const nextExperiments = await response.json();
+      const nextExperiments = await apiRequest(`${API_BASE_URL}/api/strategy-experiments`, {
+        forceRefresh: true,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
       const experiments = nextExperiments.experiments || [];
       setStrategyExperimentsData(nextExperiments);
       setStrategyLabError("");
@@ -73,9 +99,10 @@ export default function useStrategyLab({
 
   const fetchActiveStrategy = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/active-strategy`);
-      if (!response.ok) throw new Error("Unable to load active strategy");
-      const nextActiveStrategy = await response.json();
+      const nextActiveStrategy = await apiRequest(`${API_BASE_URL}/api/active-strategy`, {
+        forceRefresh: true,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
       setActiveStrategyConfig(nextActiveStrategy);
       setActiveSetData(nextActiveStrategy.activeSet || null);
       if (nextActiveStrategy.experimentId) {
@@ -97,9 +124,10 @@ export default function useStrategyLab({
 
   const fetchStrategyActiveSet = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-active-set`);
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error || "Unable to load active strategy set");
+      const result = await apiRequest(`${API_BASE_URL}/api/strategy-active-set`, {
+        forceRefresh: true,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
       setActiveSetData(result);
       return result;
     } catch (err) {
@@ -110,9 +138,10 @@ export default function useStrategyLab({
 
   const fetchStrategyLifecycleDashboard = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-lifecycle`);
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error || "Unable to load strategy lifecycle");
+      const result = await apiRequest(`${API_BASE_URL}/api/strategy-lifecycle`, {
+        forceRefresh: true,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
       setStrategyLifecycleDashboard(result);
       return result;
     } catch (err) {
@@ -123,9 +152,10 @@ export default function useStrategyLab({
 
   const fetchStrategyDeploymentAllocation = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-deployment-allocation`);
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error || "Unable to load deployment allocation");
+      const result = await apiRequest(`${API_BASE_URL}/api/strategy-deployment-allocation`, {
+        forceRefresh: true,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
       setStrategyDeploymentAllocation(result);
       return result;
     } catch (err) {
@@ -173,6 +203,7 @@ export default function useStrategyLab({
         if (!response.ok) throw new Error(result?.error || "Unable to assign strategy to active set");
         setActiveSetData(result);
         await Promise.all([
+          fetchStrategyActiveSet(),
           fetchStrategyExperiments(),
           fetchStrategyDeploymentAllocation(),
           fetchStrategyLifecycleDashboard(),
@@ -188,6 +219,7 @@ export default function useStrategyLab({
     },
     [
       fetchActiveStrategy,
+      fetchStrategyActiveSet,
       fetchStrategyDeploymentAllocation,
       fetchStrategyExperiments,
       fetchStrategyLifecycleDashboard,
@@ -208,6 +240,7 @@ export default function useStrategyLab({
         if (!response.ok) throw new Error(result?.error || "Unable to remove strategy from active set");
         setActiveSetData(result);
         await Promise.all([
+          fetchStrategyActiveSet(),
           fetchStrategyExperiments(),
           fetchStrategyDeploymentAllocation(),
           fetchStrategyLifecycleDashboard(),
@@ -223,6 +256,7 @@ export default function useStrategyLab({
     },
     [
       fetchActiveStrategy,
+      fetchStrategyActiveSet,
       fetchStrategyDeploymentAllocation,
       fetchStrategyExperiments,
       fetchStrategyLifecycleDashboard,
@@ -237,8 +271,9 @@ export default function useStrategyLab({
     setEditingStrategyExperimentId("");
   }, [defaultStrategyExperiment]);
 
-  const handleSubmitStrategyExperiment = useCallback(async () => {
+  const handleSubmitStrategyExperiment = useCallback(async (overrideForm = null) => {
     setStrategyLabError("");
+    const formToSubmit = overrideForm || strategyExperimentForm;
     try {
       const response = await fetch(
         editingStrategyExperimentId
@@ -248,10 +283,10 @@ export default function useStrategyLab({
           method: editingStrategyExperimentId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: strategyExperimentForm.name,
-            description: strategyExperimentForm.description,
-            status: strategyExperimentForm.status,
-            settings: strategyExperimentForm.settings,
+            name: formToSubmit.name,
+            description: formToSubmit.description,
+            status: formToSubmit.status,
+            settings: formToSubmit.settings,
           }),
         }
       );
@@ -261,8 +296,10 @@ export default function useStrategyLab({
       setSelectedStrategyRunId(result.runs?.[0]?.id || "");
       resetStrategyExperimentForm();
       await fetchStrategyExperiments();
+      return result;
     } catch (err) {
       setStrategyLabError(err.message);
+      return null;
     }
   }, [editingStrategyExperimentId, fetchStrategyExperiments, resetStrategyExperimentForm, strategyExperimentForm]);
 
@@ -311,6 +348,358 @@ export default function useStrategyLab({
       setStrategyLabError(err.message);
     }
   }, [fetchStrategyExperiments, selectedStrategyExperimentId]);
+
+  const resetStrategyCopilotDraft = useCallback(() => {
+    setStrategyCopilotDraft({
+      loading: false,
+      error: "",
+      mode: "draft",
+      result: null,
+    });
+  }, []);
+
+  const runStrategyCopilotRequest = useCallback(async (mode, endpoint, body, emptyError) => {
+    setStrategyCopilotDraft({
+      loading: true,
+      error: "",
+      mode,
+      result: null,
+    });
+    setStrategyLabError("");
+
+    try {
+      const result = await apiRequest(`${API_BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        max429Retries: 1,
+        priority: REQUEST_PRIORITY.MEDIUM,
+      });
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "",
+        mode,
+        result,
+      });
+      return result;
+    } catch (err) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: err.message || emptyError,
+        mode,
+        result: null,
+      });
+      return null;
+    }
+  }, []);
+
+  const getStrategyResearchContext = useCallback((experimentId) => {
+    const experiment =
+      (strategyExperimentsData.experiments || []).find((item) => item.id === experimentId) || null;
+    const lifecycle =
+      strategyLifecycleDashboard?.strategies?.find((item) => item.experimentId === experimentId) || null;
+
+    return {
+      experimentId,
+      strategyName: experiment?.name || "",
+      matrixReplay: strategyMatrixReplayResult || null,
+      portfolioSimulation: strategyPortfolioResult || null,
+      regimeAnalysis: regimeAnalysisResult || null,
+      walkForwardResult: walkForwardResult || null,
+      stressResult: stressResult || null,
+      robustnessResult: experiment?.settingsJson?.robustness || null,
+      lifecycle,
+      latestSweep: experiment?.parameterSweeps?.[0] || null,
+      latestRun: experiment?.runs?.[0] || null,
+    };
+  }, [
+    regimeAnalysisResult,
+    strategyExperimentsData.experiments,
+    strategyLifecycleDashboard?.strategies,
+    strategyMatrixReplayResult,
+    strategyPortfolioResult,
+    stressResult,
+    walkForwardResult,
+  ]);
+
+  const handleGenerateStrategyDraft = useCallback(async () => {
+    const validationError = validateStrategyCopilotDraftRequest(
+      strategyCopilotPrompt,
+      strategyCopilotPreferences
+    );
+    if (validationError) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: validationError,
+        mode: "draft",
+        result: null,
+      });
+      return null;
+    }
+
+    return runStrategyCopilotRequest(
+      "draft",
+      "/api/strategy-experiments/generate-draft",
+      buildStrategyCopilotDraftRequest(
+        strategyCopilotPrompt,
+        strategyCopilotPreferences
+      ),
+      "Unable to generate strategy draft."
+    );
+  }, [
+    runStrategyCopilotRequest,
+    strategyCopilotPreferences,
+    strategyCopilotPrompt,
+  ]);
+
+  const handleExplainStrategy = useCallback(async (experimentId) => {
+    if (!experimentId) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy before requesting an explanation.",
+        mode: "explain",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "explain",
+      "/api/strategy-experiments/explain",
+      { experimentId },
+      "Unable to explain strategy."
+    );
+  }, [runStrategyCopilotRequest]);
+
+  const handleReviewStrategy = useCallback(async (experimentId) => {
+    if (!experimentId) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy before requesting a review.",
+        mode: "review",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "review",
+      "/api/strategy-experiments/review",
+      { experimentId },
+      "Unable to review strategy."
+    );
+  }, [runStrategyCopilotRequest]);
+
+  const handleAskStrategyQuestion = useCallback(async (experimentId) => {
+    const question = strategyCopilotPrompt.trim();
+    if (!experimentId || !question) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy and enter a question first.",
+        mode: "question",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "question",
+      "/api/strategy-experiments/question",
+      { experimentId, question },
+      "Unable to answer strategy question."
+    );
+  }, [runStrategyCopilotRequest, strategyCopilotPrompt]);
+
+  const handleGenerateStrategyResearchReport = useCallback(async (experimentId) => {
+    if (!experimentId) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy before generating a research report.",
+        mode: "research",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "research",
+      "/api/strategy-experiments/research-report",
+      { experimentId, ...getStrategyResearchContext(experimentId) },
+      "Unable to generate strategy research report."
+    );
+  }, [getStrategyResearchContext, runStrategyCopilotRequest]);
+
+  const handleAskStrategyResearchQuestion = useCallback(async (experimentId) => {
+    const question = strategyCopilotPrompt.trim();
+    if (!experimentId || !question) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy and enter a research question first.",
+        mode: "research-question",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "research-question",
+      "/api/strategy-experiments/research-question",
+      { experimentId, question, ...getStrategyResearchContext(experimentId) },
+      "Unable to answer strategy research question."
+    );
+  }, [getStrategyResearchContext, runStrategyCopilotRequest, strategyCopilotPrompt]);
+
+  const handleCompareStrategyVersions = useCallback(async (experimentId, leftVersionId, rightVersionId) => {
+    if (!experimentId || !leftVersionId || !rightVersionId) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Choose two saved versions to compare.",
+        mode: "version-compare",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "version-compare",
+      "/api/strategy-experiments/version-compare",
+      {
+        experimentId,
+        leftVersionId,
+        rightVersionId,
+      },
+      "Unable to compare strategy versions."
+    );
+  }, [runStrategyCopilotRequest]);
+
+  const handleProposeStrategyEdit = useCallback(async (experimentId) => {
+    const prompt = strategyCopilotPrompt.trim();
+    if (!experimentId || !prompt) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Select a strategy and describe the edit first.",
+        mode: "edit",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "edit",
+      "/api/strategy-experiments/propose-edit",
+      { experimentId, prompt },
+      "Unable to propose strategy edit."
+    );
+  }, [runStrategyCopilotRequest, strategyCopilotPrompt]);
+
+  const handleCompareStrategiesCopilot = useCallback(async (leftExperimentId, rightExperimentId) => {
+    if (!leftExperimentId || !rightExperimentId) {
+      setStrategyCopilotDraft({
+        loading: false,
+        error: "Choose two strategies to compare.",
+        mode: "compare",
+        result: null,
+      });
+      return null;
+    }
+    return runStrategyCopilotRequest(
+      "compare",
+      "/api/strategy-compare/copilot",
+      { leftExperimentId, rightExperimentId },
+      "Unable to compare strategies."
+    );
+  }, [runStrategyCopilotRequest]);
+
+  const handleApplyGeneratedStrategyDraft = useCallback(() => {
+    const mode = strategyCopilotDraft.mode;
+    const draftForm =
+      strategyCopilotDraft.result?.draft?.form ||
+      strategyCopilotDraft.result?.draft?.after;
+    if (!draftForm) {
+      return null;
+    }
+
+    if (mode === "edit") {
+      setEditingStrategyExperimentId(selectedStrategyExperimentId);
+    }
+    setStrategyExperimentForm({
+      ...draftForm,
+      settings: { ...draftForm.settings },
+    });
+    return draftForm;
+  }, [selectedStrategyExperimentId, strategyCopilotDraft.mode, strategyCopilotDraft.result]);
+
+  const fetchStrategyMemory = useCallback(async (experimentId) => {
+    if (!experimentId) {
+      setStrategyMemory(null);
+      return null;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/strategy-experiments/${experimentId}/memory`);
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Unable to load strategy memory");
+      setStrategyMemory(result);
+      return result;
+    } catch (err) {
+      setStrategyLabError((current) => current || err.message);
+      return null;
+    }
+  }, []);
+
+  const handleApproveAndSaveGeneratedStrategyDraft = useCallback(async () => {
+    if (strategyCopilotDraft.mode === "edit") {
+      const afterForm = strategyCopilotDraft.result?.draft?.after;
+      if (!strategyCopilotDraft.result?.canApprove || !afterForm || !selectedStrategyExperimentId) {
+        return null;
+      }
+
+      setStrategyLabError("");
+      try {
+        const result = await apiRequest(`${API_BASE_URL}/api/strategy-experiments/approve-edit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: {
+            experimentId: selectedStrategyExperimentId,
+            proposedForm: afterForm,
+            review: strategyCopilotDraft.result?.review || {},
+            summary: strategyCopilotDraft.result?.review?.summaryOfChanges || "",
+            reason: strategyCopilotPrompt,
+          },
+          max429Retries: 1,
+          priority: REQUEST_PRIORITY.MEDIUM,
+        });
+        await Promise.all([
+          fetchStrategyExperiments(),
+          fetchStrategyLifecycleDashboard(),
+          fetchStrategyMemory(selectedStrategyExperimentId),
+        ]);
+        resetStrategyCopilotDraft();
+        return result;
+      } catch (err) {
+        setStrategyLabError(err.message);
+        setStrategyCopilotDraft((current) => ({
+          ...current,
+          loading: false,
+          error: err.message,
+        }));
+        return null;
+      }
+    }
+
+    const draftForm = strategyCopilotDraft.result?.draft?.form;
+    if (!strategyCopilotDraft.result?.canApprove || !draftForm) {
+      return null;
+    }
+    const saved = await handleSubmitStrategyExperiment(draftForm);
+    if (saved) {
+      resetStrategyCopilotDraft();
+    }
+    return saved;
+  }, [
+    fetchStrategyExperiments,
+    fetchStrategyLifecycleDashboard,
+    fetchStrategyMemory,
+    handleSubmitStrategyExperiment,
+    resetStrategyCopilotDraft,
+    selectedStrategyExperimentId,
+    setStrategyLabError,
+    strategyCopilotDraft.mode,
+    strategyCopilotDraft.result,
+    strategyCopilotPrompt,
+  ]);
 
   const handleRunStrategyExperiment = useCallback(async (experimentId, options = {}) => {
     setRunningStrategyExperimentId(experimentId);
@@ -446,27 +835,12 @@ export default function useStrategyLab({
 
   const fetchStrategyLeaderboard = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-leaderboard`);
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error || "Unable to load strategy leaderboard");
+      const result = await apiRequest(`${API_BASE_URL}/api/strategy-leaderboard`, {
+        cacheTtl: 15_000,
+        priority: REQUEST_PRIORITY.LOW,
+        staleTtl: 60_000,
+      });
       setStrategyLeaderboard(result);
-      return result;
-    } catch (err) {
-      setStrategyLabError((current) => current || err.message);
-      return null;
-    }
-  }, []);
-
-  const fetchStrategyMemory = useCallback(async (experimentId) => {
-    if (!experimentId) {
-      setStrategyMemory(null);
-      return null;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/strategy-experiments/${experimentId}/memory`);
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error || "Unable to load strategy memory");
-      setStrategyMemory(result);
       return result;
     } catch (err) {
       setStrategyLabError((current) => current || err.message);
@@ -661,9 +1035,19 @@ export default function useStrategyLab({
   useEffect(() => {
     const requestId = previewRequestIdRef.current + 1;
     previewRequestIdRef.current = requestId;
-    previewAbortRef.current?.abort();
-    const controller = new AbortController();
-    previewAbortRef.current = controller;
+    let compiledStrategy;
+    try {
+      compiledStrategy = serializeStrategyBuilderState(strategyExperimentForm);
+      if (!validateStrategyJson(compiledStrategy).success) {
+        cancelRequestGroup("strategy-preview");
+        setStrategyPreview({ loading: false, error: "", result: null });
+        return undefined;
+      }
+    } catch {
+      cancelRequestGroup("strategy-preview");
+      setStrategyPreview({ loading: false, error: "", result: null });
+      return undefined;
+    }
     setStrategyPreview((current) => ({
       ...current,
       loading: true,
@@ -672,23 +1056,25 @@ export default function useStrategyLab({
 
     const timer = window.setTimeout(async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/strategy-experiments/preview`, {
+        const result = await apiRequest(`${API_BASE_URL}/api/strategy-experiments/preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
+          body: {
             name: strategyExperimentForm.name,
             description: strategyExperimentForm.description,
             settings: strategyExperimentForm.settings,
             symbol: strategyRunSymbol || "AAPL",
             period: "6mo",
-          }),
+          },
+          cacheResponse: true,
+          cacheTtl: 15_000,
+          cancelGroup: "strategy-preview",
+          dedupe: true,
+          max429Retries: 1,
+          priority: REQUEST_PRIORITY.LOW,
+          staleTtl: 30_000,
         });
-        const result = await response.json().catch(() => null);
         if (previewRequestIdRef.current !== requestId) return;
-        if (!response.ok) {
-          throw new Error(result?.error || "Unable to run strategy preview");
-        }
         setStrategyPreview({
           loading: false,
           error: "",
@@ -703,16 +1089,14 @@ export default function useStrategyLab({
           result: null,
         });
       }
-    }, 750);
+    }, 1_200);
 
     return () => {
       window.clearTimeout(timer);
-      controller.abort();
+      cancelRequestGroup("strategy-preview");
     };
   }, [
-    strategyExperimentForm.description,
-    strategyExperimentForm.name,
-    strategyExperimentForm.settings,
+    strategyExperimentForm,
     strategyRunSymbol,
   ]);
 
@@ -729,10 +1113,21 @@ export default function useStrategyLab({
     fetchStrategyExperiments,
     fetchStrategyMemory,
     handleAssignStrategyActiveSet,
+    handleAskStrategyQuestion,
+    handleAskStrategyResearchQuestion,
+    handleApplyGeneratedStrategyDraft,
+    handleApproveAndSaveGeneratedStrategyDraft,
+    handleCompareStrategiesCopilot,
+    handleCompareStrategyVersions,
     handleDeleteStrategyExperiment,
     handleDuplicateStrategyExperiment,
     handleEditStrategyExperiment,
+    handleExplainStrategy,
+    handleGenerateStrategyDraft,
+    handleGenerateStrategyResearchReport,
+    handleProposeStrategyEdit,
     handleRemoveStrategyActiveSet,
+    handleReviewStrategy,
     handleRunParameterSweep,
     handleRunPortfolioSimulation,
     handleRunMatrixReplay,
@@ -745,6 +1140,7 @@ export default function useStrategyLab({
     handleSetActiveStrategyExperiment,
     handleSubmitStrategyExperiment,
     parameterSweepConfig,
+    resetStrategyCopilotDraft,
     resetStrategyExperimentForm,
     routingActionLoading,
     runningStrategyExperimentId,
@@ -761,6 +1157,10 @@ export default function useStrategyLab({
     setParameterSweepConfig,
     setSelectedStrategyExperimentId,
     setSelectedStrategyRunId,
+    setStrategyCopilotPrompt,
+    setStrategyCopilotPreferences,
+    setStrategyCopilotCompareTargetId,
+    setStrategyCopilotCompareVersionId,
     setStrategyDeploymentAllocation,
     setStrategyExperimentForm,
     setStrategyLabError,
@@ -769,6 +1169,11 @@ export default function useStrategyLab({
     setStrategyRunTopN,
     setStrategyRunUniverseId,
     setStrategyRunUniverseMode,
+    strategyCopilotDraft,
+    strategyCopilotCompareTargetId,
+    strategyCopilotCompareVersionId,
+    strategyCopilotPreferences,
+    strategyCopilotPrompt,
     strategyExperimentForm,
     strategyDeploymentAllocation,
     strategyExperimentsData,

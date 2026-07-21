@@ -1,5 +1,7 @@
 import SummaryPanel from "../../components/dashboard/SummaryPanel";
 import RiskDashboard from "../../components/risk/RiskTab";
+import PortfolioCopilotPanel from "./components/PortfolioCopilotPanel";
+import { formatNumber, formatPercent } from "../../utils/numberFormat";
 
 function getBrokerOrderDisplayPrice(order) {
   if (order?.displayLimitPrice != null && Number.isFinite(Number(order.displayLimitPrice))) {
@@ -94,17 +96,18 @@ export default function PortfolioPage({
             </div>
           </section>
 
+          <PortfolioCopilotPanel />
+
           {portfolioSection === "Overview" && (
             <>
           <section className="alerts-panel">
         <div className="alerts-panel-header">
           <div>
             <p className="eyebrow">{headlineModeLabel}</p>
-            <h2>${Number(headlineEquity).toFixed(2)}</h2>
+            <h2>${formatNumber(headlineEquity)}</h2>
           </div>
           <span>
-            Cash ${Number(headlineCash).toFixed(2)} · Fees $
-            {Number(headlineFees ?? 0).toFixed(2)}
+            Cash ${formatNumber(headlineCash)} · Fees ${formatNumber(headlineFees ?? 0)}
           </span>
         </div>
 
@@ -162,7 +165,7 @@ export default function PortfolioPage({
                         </div>
                         <div>
                           <span>Qty</span>
-                          <strong>{position.quantity}</strong>
+                          <strong>{formatNumber(position.quantity)}</strong>
                         </div>
                         <div>
                           <span>Average Cost</span>
@@ -215,7 +218,7 @@ export default function PortfolioPage({
                         </div>
                         <div>
                           <span>Quantity</span>
-                          <strong>{order.filledQuantity || 0} / {order.quantity}</strong>
+                          <strong>{formatNumber(order.filledQuantity || 0)} / {formatNumber(order.quantity)}</strong>
                         </div>
                         <div>
                           <span>Limit / Avg Fill</span>
@@ -361,7 +364,7 @@ export default function PortfolioPage({
                 <strong
                   className={Number(paperPortfolio?.realized_pnl ?? 0) >= 0 ? "positive" : "negative"}
                 >
-                  ${Number(paperPortfolio?.realized_pnl ?? 0).toFixed(2)}
+                  ${formatNumber(paperPortfolio?.realized_pnl ?? 0)}
                 </strong>
               </div>
               <div>
@@ -384,15 +387,15 @@ export default function PortfolioPage({
                     </div>
                     <div>
                       <span>Qty</span>
-                      <strong>{position.quantity}</strong>
+                      <strong>{formatNumber(position.quantity)}</strong>
                     </div>
                     <div>
                       <span>Avg</span>
-                      <strong>{Number(position.avg_price).toFixed(2)}</strong>
+                      <strong>{formatNumber(position.avg_price)}</strong>
                     </div>
                     <div>
                       <span>Last</span>
-                      <strong>{Number(position.last_price).toFixed(2)}</strong>
+                      <strong>{formatNumber(position.last_price)}</strong>
                     </div>
                   </article>
                 ))}
@@ -417,11 +420,11 @@ export default function PortfolioPage({
                     </div>
                     <div>
                       <span>Fill</span>
-                      <strong>{Number(trade.fill_price).toFixed(2)}</strong>
+                      <strong>{formatNumber(trade.fill_price)}</strong>
                     </div>
                     <div>
                       <span>Fee</span>
-                      <strong>${Number(trade.fee).toFixed(2)}</strong>
+                      <strong>${formatNumber(trade.fee)}</strong>
                     </div>
                   </article>
                 ))}
@@ -439,7 +442,7 @@ export default function PortfolioPage({
                 <h2>{manualOpenTradePositions.length} open</h2>
               </div>
               <span>
-                Journal exposure ${manualOpenTradeValue.toFixed(2)} · From Trades tab
+                Journal exposure ${formatNumber(manualOpenTradeValue)} · From Trades tab
               </span>
             </div>
 
@@ -450,7 +453,7 @@ export default function PortfolioPage({
               </div>
               <div>
                 <span>Journal Exposure</span>
-                <strong>${manualOpenTradeValue.toFixed(2)}</strong>
+                <strong>${formatNumber(manualOpenTradeValue)}</strong>
               </div>
             </div>
 
@@ -465,17 +468,17 @@ export default function PortfolioPage({
                     <div>
                       <span>Side / Qty</span>
                       <strong>
-                        {trade.side} {trade.quantity}
+                        {trade.side} {formatNumber(trade.quantity)}
                       </strong>
                     </div>
                     <div>
                       <span>Entry</span>
-                      <strong>${trade.entryPrice.toFixed(2)}</strong>
+                      <strong>${formatNumber(trade.entryPrice)}</strong>
                     </div>
                     <div>
                       <span>Latest</span>
                       <strong>
-                        {trade.latestClose ? `$${trade.latestClose.toFixed(2)}` : "No scan price"}
+                        {trade.latestClose ? `$${formatNumber(trade.latestClose)}` : "No scan price"}
                       </strong>
                     </div>
                     <div>
@@ -489,7 +492,7 @@ export default function PortfolioPage({
                       >
                         {trade.unrealizedPnL == null
                           ? "-"
-                          : `$${trade.unrealizedPnL.toFixed(2)}`}
+                          : `$${formatNumber(trade.unrealizedPnL)}`}
                       </strong>
                     </div>
                   </article>
@@ -529,7 +532,7 @@ export default function PortfolioPage({
                   value={
                     constructionPortfolio.portfolio_health_score == null
                       ? "-"
-                      : `${constructionPortfolio.portfolio_health_score}/100`
+                      : `${formatNumber(constructionPortfolio.portfolio_health_score)}/100`
                   }
                 />
                 <SummaryPanel
@@ -537,7 +540,7 @@ export default function PortfolioPage({
                   value={
                     constructionPortfolio.cash_pct == null
                       ? constructionEquity
-                        ? `${((constructionCash / constructionEquity) * 100).toFixed(2)}%`
+                        ? formatPercent((constructionCash / constructionEquity) * 100)
                         : "-"
                       : formatSafetyPercent(constructionPortfolio.cash_pct)
                   }
@@ -547,11 +550,11 @@ export default function PortfolioPage({
                   value={
                     constructionPortfolio.invested_pct == null
                       ? constructionEquity
-                        ? `${(
+                        ? formatPercent(
                             ((constructionEquity - constructionCash) /
                               constructionEquity) *
                             100
-                          ).toFixed(2)}%`
+                          )
                         : "-"
                       : formatSafetyPercent(constructionPortfolio.invested_pct)
                   }
@@ -564,11 +567,10 @@ export default function PortfolioPage({
                           constructionWeights.largest_position_pct
                         )}`
                       : largestConstructionPosition
-                        ? `${largestConstructionPosition.symbol} ${(
+                        ? `${largestConstructionPosition.symbol} ${formatPercent(
                             (Number(largestConstructionPosition.notional || 0) /
-                              constructionEquity) *
-                            100
-                          ).toFixed(2)}%`
+                              constructionEquity) * 100
+                          )}`
                         : "-"
                   }
                 />
@@ -700,8 +702,8 @@ export default function PortfolioPage({
                           type="button"
                         >
                           <strong>{item.symbol}</strong>
-                          <span>{Number(item.opportunity_score || 0).toFixed(2)}</span>
-                          <span>{item.portfolioFitScore.toFixed(0)}</span>
+                          <span>{formatNumber(item.opportunity_score || 0)}</span>
+                          <span>{formatNumber(item.portfolioFitScore)}</span>
                           <span>{item.sector || "UNKNOWN"}</span>
                           <span>{item.portfolioRecommendation}</span>
                           <span>{item.portfolioReason}</span>
@@ -736,11 +738,10 @@ export default function PortfolioPage({
                           <span>
                             {position.weight_pct == null
                               ? constructionEquity
-                                ? `${(
+                                ? formatPercent(
                                     (Number(position.notional || 0) /
-                                      constructionEquity) *
-                                    100
-                                  ).toFixed(2)}%`
+                                      constructionEquity) * 100
+                                  )
                                 : "-"
                               : formatSafetyPercent(position.weight_pct)}
                           </span>

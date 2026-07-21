@@ -1,3 +1,5 @@
+import { formatCurrency, formatNumber } from "../../../utils/numberFormat";
+
 function formatTimeline(history) {
   if (!history?.length) {
     return {
@@ -22,8 +24,8 @@ function formatTimeline(history) {
 
   return {
     detected: hoursAgo < 1 ? "Detected this hour" : `Detected ${hoursAgo}h ago`,
-    scoreShift: `${scoreStart.toFixed(0)} -> ${scoreEnd.toFixed(0)}`,
-    confidenceShift: `${confidenceStart.toFixed(0)} -> ${confidenceEnd.toFixed(0)}`,
+    scoreShift: `${formatNumber(scoreStart)} -> ${formatNumber(scoreEnd)}`,
+    confidenceShift: `${formatNumber(confidenceStart)} -> ${formatNumber(confidenceEnd)}`,
     direction:
       scoreEnd > scoreStart || confidenceEnd > confidenceStart
         ? "Improving"
@@ -40,7 +42,7 @@ function getTopReasons(item) {
 function formatPrice(item) {
   const currency = item.currency || "USD";
   if (item.close == null || item.close === "") return `${currency} -`;
-  return `${currency} ${Number(item.close).toFixed(2)}`;
+  return formatCurrency(item.close, currency);
 }
 
 function buildDeployability(item) {
@@ -104,11 +106,11 @@ function QueueCard({
         <div className="scanner-queue-card-headline">
           <div className="scanner-score-pair">
             <span>Score</span>
-            <strong>{Number(item.opportunity_score || 0).toFixed(1)}</strong>
+            <strong>{formatNumber(item.opportunity_score || 0)}</strong>
           </div>
           <div className="scanner-score-pair">
             <span>Confidence</span>
-            <strong>{Number(item.confidence || 0).toFixed(0)}%</strong>
+            <strong>{formatNumber(item.confidence || 0)}%</strong>
           </div>
           <div className="scanner-score-pair">
             <span>Latest</span>

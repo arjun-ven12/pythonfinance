@@ -1,8 +1,32 @@
 from strategy_conditioning import normalize_regime_label
 
 
+SECTOR_ALIASES = {
+    "INFORMATION TECHNOLOGY": "Technology",
+    "TECH": "Technology",
+    "COMMUNICATION SERVICES": "Communication Services",
+    "COMM SERVICES": "Communication Services",
+    "COMM SVCS": "Communication Services",
+    "TELECOMMUNICATION SERVICES": "Communication Services",
+    "SEMICONDUCTORS": "Semiconductor",
+    "SEMIS": "Semiconductor",
+}
+
+
+def normalize_sector_label(value, fallback="UNKNOWN"):
+    label = str(value or fallback).strip()
+    if not label:
+        return fallback
+
+    normalized = " ".join(label.upper().replace("&", " AND ").split())
+    if normalized in SECTOR_ALIASES:
+        return SECTOR_ALIASES[normalized]
+
+    return label
+
+
 def normalize_matrix_key(sector, regime):
-    return f"{str(sector or 'UNKNOWN').strip()}::{str(regime or 'UNKNOWN').strip()}"
+    return f"{normalize_sector_label(sector)}::{str(regime or 'UNKNOWN').strip()}"
 
 
 def _normalize_allocation_matrix(source):
@@ -35,7 +59,7 @@ def resolve_allocation_matrix_cell(allocation_matrix, sector, regime_label):
     if not isinstance(matrix, dict):
         return None
 
-    normalized_sector = str(sector or "UNKNOWN").strip()
+    normalized_sector = normalize_sector_label(sector)
     normalized_regime = normalize_regime_label(regime_label)
     for key in (
         f"{normalized_sector}::{normalized_regime}",

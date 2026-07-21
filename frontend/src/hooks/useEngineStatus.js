@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL, apiFetch as fetch } from "../services/apiClient";
+import { apiRequest, REQUEST_PRIORITY } from "../services/apiRequestManager";
 
 export default function useEngineStatus({
   buildExecutionSettingsPayload,
@@ -17,9 +18,11 @@ export default function useEngineStatus({
 
   const fetchEngineStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/engine-status`);
-      if (!response.ok) throw new Error("Unable to load engine status");
-      const nextStatus = await response.json();
+      const nextStatus = await apiRequest(`${API_BASE_URL}/api/engine-status`, {
+        cacheTtl: 5_000,
+        priority: REQUEST_PRIORITY.LOW,
+        staleTtl: 20_000,
+      });
       setEngineStatus(nextStatus);
       if (nextStatus.is_running) onIntervalFromStatus?.(nextStatus.interval || "15min");
       setEngineError("");

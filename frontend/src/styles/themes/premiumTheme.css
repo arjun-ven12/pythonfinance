@@ -108,8 +108,12 @@ html[data-theme="light"] body::before {
 }
 
 .app-shell {
-  grid-template-columns: 236px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: var(--space-6);
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .app-content {
@@ -264,15 +268,16 @@ h3 {
 .app-sidebar {
   top: var(--space-6);
   min-height: calc(100vh - (var(--space-6) * 2));
-  gap: var(--space-6);
-  padding: 22px 20px 18px;
-  border-radius: 18px;
+  gap: var(--space-5);
+  padding: var(--space-5) 14px;
+  border-radius: var(--radius-panel);
   background:
     linear-gradient(180deg, rgba(10, 16, 24, 0.98), rgba(7, 11, 18, 0.98)) !important;
 }
 
 .sidebar-brand {
-  padding: 2px 4px 0;
+  gap: var(--space-5);
+  padding: 0;
 }
 
 .sidebar-collapse-button {
@@ -321,6 +326,7 @@ h3 {
 
 .sidebar-admin-card {
   border-color: rgba(88, 166, 255, 0.38);
+  border-radius: 10px;
   background:
     linear-gradient(180deg, rgba(24, 38, 58, 0.96), rgba(18, 28, 44, 0.96));
   box-shadow:
@@ -331,6 +337,7 @@ h3 {
 .sidebar-admin-icon {
   background:
     linear-gradient(180deg, rgba(55, 79, 132, 0.96), rgba(38, 55, 96, 0.98));
+  color: var(--terminal-blue);
 }
 
 .sidebar-admin-title-row strong {
@@ -352,16 +359,16 @@ h3 {
 }
 
 .tabs-nav {
-  gap: 4px;
+  gap: 18px;
 }
 
 .tabs-section {
-  gap: 5px;
+  gap: 4px;
 }
 
 .tabs-section + .tabs-section {
-  margin-top: var(--space-3);
-  padding-top: var(--space-4);
+  margin-top: 0;
+  padding-top: 0;
   border-top-color: var(--terminal-line);
 }
 
@@ -403,10 +410,11 @@ h3 {
   min-height: 40px;
   justify-content: flex-start;
   border-color: transparent !important;
+  border-left: 2px solid transparent !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--terminal-text-soft) !important;
-  padding: 9px 10px 9px 12px;
+  padding: 10px 14px;
   font-size: 15px;
   font-weight: 600;
 }
@@ -453,15 +461,50 @@ h3 {
 .filters button.active,
 .quick-filters button.active {
   box-shadow:
-    inset 3px 0 0 var(--terminal-blue),
     var(--terminal-highlight) !important;
 }
 
 .tabs-nav button.active {
   border-color: rgba(88, 166, 255, 0.32) !important;
+  border-left-color: var(--terminal-blue) !important;
   background: linear-gradient(180deg, rgba(17, 29, 46, 0.92), rgba(14, 23, 36, 0.92)) !important;
   color: var(--terminal-text) !important;
   transform: none;
+}
+
+.app-shell.sidebar-collapsed .tabs-nav {
+  gap: 8px;
+}
+
+.app-shell.sidebar-collapsed .tabs-section {
+  gap: 8px;
+}
+
+.app-shell.sidebar-collapsed .tabs-section + .tabs-section {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--terminal-line);
+}
+
+.app-shell.sidebar-collapsed .tabs-nav button {
+  border-left-color: transparent !important;
+  border-radius: var(--radius-control);
+  padding: 10px 0;
+}
+
+.app-shell.sidebar-collapsed .tabs-nav button.active {
+  border-color: rgba(88, 166, 255, 0.32) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--terminal-blue) 34%, transparent),
+    var(--terminal-highlight) !important;
+}
+
+.app-shell.sidebar-collapsed .tabs-nav button:hover {
+  transform: none;
+}
+
+.app-shell.sidebar-collapsed .sidebar-admin-card {
+  border-radius: 12px;
 }
 
 .sidebar-user-panel {

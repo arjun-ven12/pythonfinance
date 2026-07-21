@@ -6,6 +6,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:backfill-ledger": "node scripts/backfill-paper-ledger.js",
+    "db:backfill-memory": "node scripts/backfill-memory.js",
+    "db:backfill-memory-embeddings": "node scripts/backfill-memory-embeddings.js",
     "db:seed": "prisma db seed",
     "prestart": "prisma generate",
     "test": "node --test",

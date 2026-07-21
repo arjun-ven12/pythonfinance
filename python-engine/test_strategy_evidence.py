@@ -1,5 +1,6 @@
 from regime_engine import summarize_trades_by_regime
 import json
+from datetime import datetime
 from walk_forward_engine import build_mode_windows, calculate_summary
 from walk_forward_engine import run_walk_forward
 
@@ -59,6 +60,17 @@ def test_walk_forward_output_is_json_serializable(monkeypatch):
             "sharpe_ratio": 0.5,
             "max_drawdown_pct": -2.0,
             "completed_trades": 3,
+            "equity_curve": [
+                {"date": datetime(2020, 1, 21), "equity": 1000},
+                {"date": datetime(2020, 1, 22), "equity": 1010},
+            ],
+            "completed_trade_log": [
+                {
+                    "entry_date": datetime(2020, 1, 21),
+                    "exit_date": datetime(2020, 1, 22),
+                    "pnl": 10,
+                }
+            ],
         }
 
     monkeypatch.setattr("walk_forward_engine.run_backtest", fake_run_backtest)

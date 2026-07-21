@@ -4,7 +4,10 @@ const test = require("node:test");
 const express = require("express");
 
 const createAiRouter = require("../features/ai/routes/ai.routes");
-const { createAiRateLimiter } = require("../middleware/aiRateLimit");
+const {
+  createAiRateLimiter,
+  createInternalAiRateLimiter,
+} = require("../middleware/aiRateLimit");
 
 async function withAiServer(callback, aiService) {
   const app = express();
@@ -20,6 +23,9 @@ async function withAiServer(callback, aiService) {
       aiRateLimiter: createAiRateLimiter(),
     })
   );
+  app.get("/api/strategy-health", (_req, res) => {
+    res.json({ ok: true });
+  });
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 
@@ -78,6 +84,63 @@ test("AI routes enforce a 30 request per minute rate limit per user", async () =
     assert.equal(responses[30].status, 429);
     const payload = await responses[30].json();
     assert.match(payload.error, /AI request limit reached/i);
+  }, {
+    analyzeStock: async () => ({}),
+    analyzePortfolio: async () => ({}),
+    explainScannerResult: async () => ({}),
+    reviewTrade: async () => ({}),
+    summarizeNews: async () => ({}),
+    chat: async () => ({
+      answer: "ok",
+      confidence: 70,
+      bullets: [],
+      followUps: [],
+      meta: { cached: false, provider: "OPENAI", model: "gpt-5.4" },
+    }),
+  });
+});
+
+test("internal AI limiter uses an independent scanner burst allowance", async () => {
+  const app = express();
+  app.use((req, _res, next) => {
+    req.user = { id: "user-1" };
+    next();
+  });
+  app.get("/interactive", createAiRateLimiter({ limit: 1 }), (_req, res) => {
+    res.json({ ok: true });
+  });
+  app.get("/internal", createInternalAiRateLimiter({ limit: 2 }), (_req, res) => {
+    res.json({ ok: true });
+  });
+  const server = http.createServer(app);
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    assert.equal((await fetch(`${origin}/interactive`)).status, 200);
+    assert.equal((await fetch(`${origin}/interactive`)).status, 429);
+    assert.equal((await fetch(`${origin}/internal`)).status, 200);
+    assert.equal((await fetch(`${origin}/internal`)).status, 200);
+    assert.equal((await fetch(`${origin}/internal`)).status, 429);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("non-AI API requests do not consume the AI rate limit", async () => {
+  await withAiServer(async (origin) => {
+    for (let index = 0; index < 35; index += 1) {
+      const response = await fetch(`${origin}/api/strategy-health`);
+      assert.equal(response.status, 200);
+    }
+
+    const aiResponse = await fetch(`${origin}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", content: "hello" }] }),
+    });
+
+    assert.equal(aiResponse.status, 200);
   }, {
     analyzeStock: async () => ({}),
     analyzePortfolio: async () => ({}),

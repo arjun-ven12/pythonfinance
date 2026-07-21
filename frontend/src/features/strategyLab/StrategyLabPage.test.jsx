@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { __resetApiRequestManagerForTests } from "../../services/apiRequestManager";
 import { DEFAULT_STRATEGY_EXPERIMENT } from "./constants";
 import StrategyLabPage from "./StrategyLabPage";
 import {
@@ -198,6 +199,7 @@ function renderStrategyLab() {
 
 afterEach(() => {
   cleanup();
+  __resetApiRequestManagerForTests();
   localStorage.clear();
   vi.unstubAllGlobals();
 });
@@ -241,6 +243,32 @@ describe("StrategyLabPage", () => {
     expect(await screen.findByText("Unified Strategy Workspace")).toBeInTheDocument();
     expect(screen.getAllByText("Momentum Lab").length).toBeGreaterThan(0);
     expect(screen.getByText("1 saved")).toBeInTheDocument();
+  });
+
+  it("deduplicates Strategy Lab initial endpoint loads", async () => {
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).endsWith("/api/strategy-experiments")) {
+        return response({ experiments: [experiment] });
+      }
+      return response({ experimentId: "strategy-1", name: "Momentum Lab" });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderStrategyLab();
+    await screen.findByText("1 saved");
+
+    const endpointCounts = [
+      "/api/strategy-experiments",
+      "/api/active-strategy",
+      "/api/strategy-active-set",
+      "/api/strategy-lifecycle",
+      "/api/strategy-deployment-allocation",
+      "/api/strategy-leaderboard",
+    ].map((endpoint) =>
+      fetchMock.mock.calls.filter(([url]) => String(url).endsWith(endpoint)).length
+    );
+
+    expect(endpointCounts).toEqual([1, 1, 1, 1, 1, 1]);
   });
 
   it("shows backtest metrics and enables compare mode", async () => {
@@ -341,7 +369,7 @@ describe("StrategyLabPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /builder/i }));
 
-    expect(await screen.findByRole("heading", { name: /generated strategy representation/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /generated execution contract/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /json view/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /future code view/i })).toBeInTheDocument();
     expect(screen.getByText(/entry logic/i)).toBeInTheDocument();

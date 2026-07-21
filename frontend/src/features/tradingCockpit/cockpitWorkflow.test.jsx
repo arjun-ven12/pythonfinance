@@ -202,7 +202,7 @@ describe("cockpit workflow smoke tests", () => {
     );
     expect(screen.queryByText(/manual journal/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /construction/i }));
-    fireEvent.click(screen.getByRole("button", { name: /risk/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^risk$/i }));
     expect(setPortfolioSection).toHaveBeenCalledWith("Construction");
     expect(setPortfolioSection).toHaveBeenCalledWith("Risk");
   });

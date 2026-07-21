@@ -1,13 +1,15 @@
 import json
 import os
 import hashlib
+import time
+from collections import OrderedDict
 from pathlib import Path
 
 
 PYTHON_ENGINE_DIR = Path(__file__).resolve().parent
-OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
-DEFAULT_MODEL = "gpt-4o-mini"
-_SCAN_CACHE = {}
+CACHE_TTL_SECONDS = int(os.getenv("NODE_AI_NEWS_CACHE_TTL_SECONDS", "300"))
+CACHE_MAX_ENTRIES = int(os.getenv("NODE_AI_NEWS_CACHE_MAX_ENTRIES", "250"))
+_SCAN_CACHE = OrderedDict()
 
 
 try:
@@ -29,20 +31,41 @@ def clamp_confidence_adjustment(value):
     return max(-25, min(15, adjustment))
 
 
-def default_reasoning(symbol, reason):
+def default_reasoning(symbol, reason, reason_code="gateway_unavailable"):
     return {
-        "news_summary": "OpenAI news reasoning unavailable.",
+        "news_summary": "AI news reasoning unavailable.",
         "risk_level": "MEDIUM",
         "sentiment": "NEUTRAL",
         "confidence_adjustment": 0,
         "allow_trade": True,
         "reasoning": f"{symbol}: {reason}",
+        "aiUnavailable": True,
+        "reason": reason_code,
+        "fallbackUsed": True,
+    }
+
+
+def no_news_reasoning():
+    return {
+        "news_summary": "No relevant news events were supplied for AI assessment.",
+        "risk_level": "MEDIUM",
+        "sentiment": "NEUTRAL",
+        "confidence_adjustment": 0,
+        "allow_trade": True,
+        "reasoning": "News AI was not needed because there were no events to assess.",
+        "aiUnavailable": False,
+        "reason": "no_news_events",
+        "fallbackUsed": False,
     }
 
 
 def normalize_reasoning(symbol, raw_result):
     if not isinstance(raw_result, dict):
-        return default_reasoning(symbol, "Model returned an invalid response.")
+        return default_reasoning(
+            symbol,
+            "Model returned an invalid response.",
+            reason_code="invalid_ai_response",
+        )
 
     risk_level = str(raw_result.get("risk_level", "MEDIUM")).upper()
     sentiment = str(raw_result.get("sentiment", "NEUTRAL")).upper()
@@ -62,6 +85,9 @@ def normalize_reasoning(symbol, raw_result):
         ),
         "allow_trade": bool(raw_result.get("allow_trade", True)),
         "reasoning": str(raw_result.get("reasoning") or "No reasoning provided."),
+        "aiUnavailable": False,
+        "reason": None,
+        "fallbackUsed": False,
     }
 
 
@@ -79,76 +105,51 @@ def build_prompt(symbol, technical_signal, confidence, market_regime, news_event
     }
 
 
-def request_openai_reasoning(payload, api_key, model, timeout):
+def get_cached_reasoning(cache_key):
+    cached = _SCAN_CACHE.get(cache_key)
+    if not cached:
+        return None
+
+    if time.time() - cached["created_at"] > CACHE_TTL_SECONDS:
+        _SCAN_CACHE.pop(cache_key, None)
+        return None
+
+    _SCAN_CACHE.move_to_end(cache_key)
+    return cached["value"]
+
+
+def set_cached_reasoning(cache_key, value):
+    _SCAN_CACHE[cache_key] = {
+        "created_at": time.time(),
+        "value": value,
+    }
+    _SCAN_CACHE.move_to_end(cache_key)
+
+    while len(_SCAN_CACHE) > CACHE_MAX_ENTRIES:
+        _SCAN_CACHE.popitem(last=False)
+
+
+def request_node_ai_reasoning(payload, user_id, timeout):
     import requests
 
+    gateway_url = os.getenv("NODE_AI_GATEWAY_URL")
+    gateway_token = os.getenv("NODE_AI_GATEWAY_TOKEN")
+
+    if not gateway_url or not gateway_token:
+        raise RuntimeError("Node AI gateway is not configured.")
+
     response = requests.post(
-        OPENAI_CHAT_COMPLETIONS_URL,
+        gateway_url,
         headers={
-            "Authorization": f"Bearer {api_key}",
+            "X-Internal-AI-Token": gateway_token,
+            "X-AI-User-ID": str(user_id),
             "Content-Type": "application/json",
         },
-        json={
-            "model": model,
-            "temperature": 0.1,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a risk analyst for a trading dashboard. "
-                        "You may not generate BUY, HOLD, or SELL recommendations. "
-                        "Only explain news risk and suggest a confidence adjustment."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": json.dumps(payload),
-                },
-            ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "news_reasoning",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "news_summary": {"type": "string"},
-                            "risk_level": {
-                                "type": "string",
-                                "enum": ["LOW", "MEDIUM", "HIGH"],
-                            },
-                            "sentiment": {
-                                "type": "string",
-                                "enum": ["POSITIVE", "NEUTRAL", "NEGATIVE"],
-                            },
-                            "confidence_adjustment": {
-                                "type": "integer",
-                                "minimum": -25,
-                                "maximum": 15,
-                            },
-                            "allow_trade": {"type": "boolean"},
-                            "reasoning": {"type": "string"},
-                        },
-                        "required": [
-                            "news_summary",
-                            "risk_level",
-                            "sentiment",
-                            "confidence_adjustment",
-                            "allow_trade",
-                            "reasoning",
-                        ],
-                    },
-                },
-            },
-        },
+        json={**payload, "userId": str(user_id)},
         timeout=timeout,
     )
     response.raise_for_status()
-    data = response.json()
-    content = data["choices"][0]["message"]["content"]
-    return json.loads(content)
+    return response.json()
 
 
 def reason_about_news(
@@ -162,6 +163,9 @@ def reason_about_news(
     model=None,
     timeout=20,
 ):
+    if not news_events:
+        return no_news_reasoning()
+
     cache_inputs = {
         "user_id": str(user_id),
         "symbol": symbol.upper(),
@@ -175,14 +179,9 @@ def reason_about_news(
     ).hexdigest()
 
     if cache_key in _SCAN_CACHE:
-        return _SCAN_CACHE[cache_key]
-
-    resolved_api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
-
-    if not resolved_api_key:
-        result = default_reasoning(symbol, "OPENAI_API_KEY is not configured.")
-        _SCAN_CACHE[cache_key] = result
-        return result
+        cached = get_cached_reasoning(cache_key)
+        if cached:
+            return cached
 
     payload = build_prompt(
         symbol=symbol,
@@ -193,15 +192,18 @@ def reason_about_news(
     )
 
     try:
-        raw_result = request_openai_reasoning(
+        raw_result = request_node_ai_reasoning(
             payload=payload,
-            api_key=resolved_api_key,
-            model=model or os.getenv("OPENAI_NEWS_MODEL", DEFAULT_MODEL),
+            user_id=os.getenv("NODE_AI_USER_ID") or user_id,
             timeout=timeout,
         )
         result = normalize_reasoning(symbol, raw_result)
+        set_cached_reasoning(cache_key, result)
     except Exception as error:
-        result = default_reasoning(symbol, f"OpenAI request failed safely: {error}")
+        result = default_reasoning(
+            symbol,
+            f"Node AI gateway request failed safely: {error}",
+            reason_code="gateway_unavailable",
+        )
 
-    _SCAN_CACHE[cache_key] = result
     return result
