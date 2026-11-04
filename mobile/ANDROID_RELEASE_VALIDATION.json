@@ -1,0 +1,48 @@
+{
+  "observedAt": "2026-11-04T02:11:07.838694+00:00",
+  "implementationCommit": "53af99e1ea0939b489b4ced82194394727376a32",
+  "githubValidation": {
+    "url": "https://github.com/arjun-ven12/pythonfinance/actions/runs/41758890987",
+    "runId": 41758890987,
+    "event": "workflow_dispatch",
+    "validation_only": true,
+    "conclusion": "success",
+    "checks": "success",
+    "build": "skipped",
+    "publish": "skipped",
+    "artifactCount": 0
+  },
+  "localChecks": {
+    "mobileTests": {
+      "passed": 25,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "actionlint": "passed",
+    "expoNativeGeneration": "passed",
+    "generatedUnsignedReleaseConfiguration": "passed",
+    "pinnedGradleChecksum": "passed",
+    "gitDiffCheck": "passed"
+  },
+  "releaseState": {
+    "signedReleaseApkBuilt": false,
+    "apkChecksumGenerated": false,
+    "releaseCreated": false,
+    "releaseUrl": null,
+    "reason": "Persistent Android signing secrets and operator-approved production API origin have not been configured."
+  },
+  "safety": {
+    "backendOrEngineChangedByReleaseCommits": false,
+    "productionCredentialsChanged": false,
+    "liveTradingEnabled": false,
+    "realOrdersSubmitted": false
+  },
+  "sourceSha256": {
+    ".github/workflows/android-release.yml": "32716aed211f947d8d616257489b82026fc3ad5fac40f308df4c4516a7b9b518",
+    "mobile/app.config.ts": "a50925f579f6cddc2908af3ffdc36294eba9b0d9377703f916eb095f679d5682",
+    "mobile/scripts/android-release.cjs": "ffdc5627e902958ef047a7aa43f19e671d4239c0a781251159f6aca95ec4d0fa",
+    "mobile/scripts/android-release.d.cts": "e81d97965f74f6b52325f33e33bfb95105ba0e1abf3d7a2a4be8a5a1b6a8ce41",
+    "mobile/tests/release.test.ts": "9f9ac1f3d9e5f46c290e11021bd893d77ced2a078bcc101c7596030d6e517d3e"
+  }
+}

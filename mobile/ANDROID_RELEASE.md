@@ -149,3 +149,14 @@ lint, replace a release with a debug APK, or remove the certificate comparison.
 References: [Android signing](https://developer.android.com/studio/publish/app-signing),
 [apksigner](https://developer.android.com/tools/apksigner),
 [Expo native generation](https://docs.expo.dev/workflow/continuous-native-generation/).
+
+
+## Recorded implementation verification
+
+GitHub [validation-only run 41758890987](https://github.com/arjun-ven12/pythonfinance/actions/runs/41758890987)
+passed on implementation commit `53af99e`: clean dependency install, TypeScript,
+ESLint, all **25 mobile tests**, Expo compatibility, Android generation and release
+configuration checks. Local actionlint and the same mobile checks passed.
+Build/sign/publish jobs were **skipped**, zero artifacts were produced, and no APK,
+checksum or GitHub Release exists from this run. Signing/backend secrets are absent.
+[Machine-readable evidence](ANDROID_RELEASE_VALIDATION.json) records the scope.
